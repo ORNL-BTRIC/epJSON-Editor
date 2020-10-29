@@ -1,4 +1,5 @@
 from epjsoneditor.schemainputfield import SchemaInputField
+from epjsoneditor.schemainputfielddict import SchemaInputFieldDict
 
 
 class SchemaInputObject:
@@ -28,5 +29,6 @@ class SchemaInputObject:
 
         fields_in_order = json_properties["legacy_idd"]["fields"]
         self.input_fields = {}  # note Python 3.7 and later preserve insertion order for dictionaries.
-        for field in fields_in_order:
-            self.input_fields[field] = SchemaInputField(field, json_properties)
+        for counter, field in enumerate(fields_in_order):
+            #self.input_fields[field] = SchemaInputField(field, json_properties, counter)
+            self.input_fields[field] = SchemaInputFieldDict(field, json_properties, counter).dict
