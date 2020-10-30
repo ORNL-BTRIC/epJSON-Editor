@@ -1,6 +1,6 @@
 
 class SchemaInputObject:
-    def __init__(self, object_name, json_properties):
+    def __init__(self, json_properties):
         # self.json_properties = json_properties # for debugging only
 
         if "memo" in json_properties:
@@ -38,6 +38,10 @@ class SchemaInputObject:
             self.input_fields[field] = self.get_input_field(field, json_properties, True)
 
     def get_input_field(self, field, json_properties, is_extension):
+        """
+        Based on the the field and the portion of the Energy+.schema.epJSON file
+        returns the details for that field.
+        """
         pattern_properties = json_properties["patternProperties"]
         return_dict = {}
         if field == "name" and "name" in json_properties:
@@ -51,20 +55,30 @@ class SchemaInputObject:
         if is_extension:
             extension_dict = self.trim_extension_field_hierarchy(return_dict)
             for extensible_field in extension_dict.keys():
-                extension_dict[extensible_field]["field_name_with_spaces"] = self.add_field_name_with_spaces(return_dict, json_properties, extensible_field)
-                extension_dict[extensible_field]["is_required"] = self.is_field_required(return_dict, extensible_field)
+                extension_dict[extensible_field]["field_name_with_spaces"] = \
+                    self.add_field_name_with_spaces(json_properties, extensible_field)
+                extension_dict[extensible_field]["is_required"] = \
+                    self.is_field_required(return_dict["items"], extensible_field)
             return extension_dict
-        return_dict["field_name_with_spaces"] = self.add_field_name_with_spaces(return_dict, json_properties, field)
+        return_dict["field_name_with_spaces"] = self.add_field_name_with_spaces(json_properties, field)
         return return_dict
 
-    def get_from_under_pattern_properties(self, sub_key, field):
+    @staticmethod
+    def get_from_under_pattern_properties(sub_key, field):
+        """
+        Returns a portion of the json-schema in the Energy+.schema.epJSON that corresponds to just the current field.
+        """
         return_dict = {}
         if "properties" in sub_key:
             if field in sub_key["properties"]:
-                 return_dict = sub_key["properties"][field]
+                return_dict = sub_key["properties"][field]
         return return_dict
 
-    def add_field_name_with_spaces(self, cur_dictionary, sub_key, field):
+    @staticmethod
+    def add_field_name_with_spaces(sub_key, field):
+        """
+        Returns the full field name with capital letters and spaces from the JSON schema
+        """
         if "legacy_idd" in sub_key:
             if "field_info" in sub_key["legacy_idd"]:
                 field_info = sub_key["legacy_idd"]["field_info"]
@@ -73,17 +87,23 @@ class SchemaInputObject:
                         return field_info[field]["field_name"]
         return ""
 
-    def trim_extension_field_hierarchy(self,working_dictionary):
+    @staticmethod
+    def trim_extension_field_hierarchy(working_dictionary):
+        """
+        Returns a subset of the Energy+.schema.epJSON schema file that is under /items/properties
+        """
         if "items" in working_dictionary:
             if "properties" in working_dictionary["items"]:
                 return working_dictionary["items"]["properties"]
         return working_dictionary
 
-    def is_field_required(self, working_dictionary, field):
+    @staticmethod
+    def is_field_required(working_dictionary, field):
+        """
+        Determines if a field is required or not.
+        """
         if "required" in working_dictionary:
             is_required = field in working_dictionary["required"]
         else:
             is_required = False
         return is_required
-
-
