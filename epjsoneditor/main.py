@@ -1,5 +1,6 @@
 import json
 from epjsoneditor.schemainputobject import SchemaInputObject
+from epjsoneditor.interface.application import EpJsonEditorApplication
 
 data_dictionary = {}
 
@@ -14,6 +15,10 @@ def create_data_dictionary():
         for object_name, json_properties in epschema["properties"].items():
             data_dictionary[object_name] = SchemaInputObject(json_properties)
 
-
+# just for testing
 create_data_dictionary()
 print()
+
+app = EpJsonEditorApplication(0)
+app.MainLoop()
+
