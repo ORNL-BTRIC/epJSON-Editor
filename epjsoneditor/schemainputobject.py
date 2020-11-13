@@ -22,7 +22,7 @@ class SchemaInputObject:
 
         self.extensible_size = 0
         if "extensible_size" in json_properties:
-            self.min_fields = json_properties["extensible_size"]
+            self.extensible_size = json_properties["extensible_size"]
 
         fields_in_order = []
         extensible_fields = []

@@ -1,7 +1,10 @@
 import wx
+import wx.grid
 import wx.lib.agw.aui as aui
 import os
 import json
+
+from wx import Panel
 
 from epjsoneditor.schemainputobject import SchemaInputObject
 
@@ -19,6 +22,7 @@ class EpJsonEditorFrame(wx.Frame):
 
         self.object_list_tree = None
         self.object_list_root = None
+        self.input_grid = None
         self.create_gui()
 
     def create_gui(self):
@@ -45,9 +49,15 @@ class EpJsonEditorFrame(wx.Frame):
                             wx.DefaultPosition, wx.Size(600, 650),
                             wx.NO_BORDER | wx.TE_MULTILINE)
 
+
         # add the panes to the manager
-        self._mgr.AddPane(text4, aui.AuiPaneInfo().CenterPane())
+        self._mgr.AddPane(text4, aui.AuiPaneInfo().CenterPane().Name("text_content"))
         self._mgr.AddPane(self.explanation_text, aui.AuiPaneInfo().Top().Caption("Explanation"))
+
+        self.main_grid = self.CreateGrid()
+        self._mgr.AddPane(self.main_grid, aui.AuiPaneInfo().Name("grid_content").
+                          CenterPane().Hide().MinimizeButton(True))
+
         self._mgr.AddPane(text3, aui.AuiPaneInfo().Bottom().Caption("Search"))
         # Layer(2) allows it to take all of left side
         self._mgr.AddPane(self.object_list_tree, aui.AuiPaneInfo().Left().Layer(2).Caption("List of Input Objects"))
@@ -55,8 +65,25 @@ class EpJsonEditorFrame(wx.Frame):
         # tell the manager to "commit" all the changes just made
         self._mgr.Update()
 
+        # it works better to have TextCntrl for CenterPane shown and hidden and the grid being hidden then shown
+        self._mgr.GetPane("grid_content").Show(True)
+        self._mgr.GetPane("text_content").Show(False)
+        self._mgr.Update()
+
         self.Bind(wx.EVT_CLOSE, self.OnClose)
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.select_object_list_item, self.object_list_tree)
+
+    def create_grid(self):
+        grid = wx.grid.Grid(self, -1, wx.Point(0, 0), wx.Size(150, 250),
+                            wx.NO_BORDER | wx.WANTS_CHARS)
+        grid.CreateGrid(5, 5)
+        return grid
+
+    def CreateGrid(self):
+        grid = wx.grid.Grid(self, -1, wx.Point(0, 0), wx.Size(150, 250),
+                            wx.NO_BORDER | wx.WANTS_CHARS)
+        grid.CreateGrid(50, 20)
+        return grid
 
     def OnClose(self, event):
         # deinitialize the frame manager
@@ -68,6 +95,33 @@ class EpJsonEditorFrame(wx.Frame):
         explanation = selected_object_name + os.linesep + os.linesep \
                       + self.data_dictionary[selected_object_name].memo
         self.explanation_text.Value = explanation
+        self.update_grid(selected_object_name)
+
+
+    def update_grid(self, selected_object_name):
+        self.main_grid.FreezeTo(0,1)
+        self.main_grid.SetCornerLabelValue("Field")
+        self.main_grid.SetColLabelValue(0,"Units")
+        self.main_grid.SetColLabelValue(1,"Obj1")
+        print(selected_object_name)
+        selected_object_dict = self.data_dictionary[selected_object_name]
+        input_fields = selected_object_dict.input_fields
+#        if selected_object_dict.extensible_size > 0:
+#            input_fields.extend()
+        # resize the number of rows if necessary
+        current_rows, new_rows = (self.main_grid.GetNumberRows(), len(input_fields))
+        if new_rows < current_rows:
+            self.main_grid.DeleteRows(0, current_rows - new_rows, True)
+        if new_rows > current_rows:
+            self.main_grid.AppendRows(new_rows - current_rows)
+        for counter, input_field in enumerate(input_fields):
+            current_field = input_fields[input_field]
+            if "field_name_with_spaces" in current_field:
+                self.main_grid.SetRowLabelValue(counter, input_fields[input_field]["field_name_with_spaces"])
+            else:
+                self.main_grid.SetRowLabelValue(counter, input_field)
+        self.main_grid.SetRowLabelSize(300)
+        self.main_grid.SetRowLabelAlignment(wx.ALIGN_LEFT,wx.ALIGN_TOP)
 
     def create_data_dictionary(self):
         """
