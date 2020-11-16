@@ -124,17 +124,26 @@ class EpJsonEditorFrame(wx.Frame):
         for counter, input_field in enumerate(input_fields_keys):
             current_field = input_fields[input_field]
             if "field_name_with_spaces" in current_field:
-                self.main_grid.SetRowLabelValue(counter, input_fields[input_field]["field_name_with_spaces"])
+                self.main_grid.SetRowLabelValue(counter, current_field["field_name_with_spaces"])
             else:
                 self.main_grid.SetRowLabelValue(counter, input_field)
+            self.main_grid.SetCellValue(counter, 0, "")
+            if "units" in current_field:
+                self.main_grid.SetCellValue(counter, 0, current_field["units"])
+            self.main_grid.SetCellBackgroundColour(counter, 0, wx.LIGHT_GREY)
+
         field_count = len(input_fields)
         for repeat in range(1, repeat_extension_fields + 1):
             for counter, extension_field in enumerate(extension_field_keys):
                 current_field = extension_fields[extension_field]
                 if "field_name_with_spaces" in current_field:
-                    self.main_grid.SetRowLabelValue(counter + field_count, extension_fields[extension_field]["field_name_with_spaces"] + "-" + str(repeat).zfill(3))
+                    self.main_grid.SetRowLabelValue(counter + field_count, current_field["field_name_with_spaces"] + "-" + str(repeat).zfill(3))
                 else:
                     self.main_grid.SetRowLabelValue(counter + field_count, extension_fields + "-" + str(repeat).zfill(3))
+                self.main_grid.SetCellValue(counter + field_count, 0, "")
+                if "units" in current_field:
+                    self.main_grid.SetCellValue(counter + field_count, 0, current_field["units"])
+                self.main_grid.SetCellBackgroundColour(counter + field_count, 0, wx.LIGHT_GREY)
             field_count += len(extension_fields)
         self.main_grid.SetRowLabelSize(300)
         self.main_grid.SetRowLabelAlignment(wx.ALIGN_LEFT,wx.ALIGN_TOP)
