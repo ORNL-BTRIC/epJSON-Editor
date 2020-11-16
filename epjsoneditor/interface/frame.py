@@ -106,20 +106,36 @@ class EpJsonEditorFrame(wx.Frame):
         print(selected_object_name)
         selected_object_dict = self.data_dictionary[selected_object_name]
         input_fields = selected_object_dict.input_fields
-#        if selected_object_dict.extensible_size > 0:
-#            input_fields.extend()
+        input_fields_keys = list(input_fields.keys())
+        extension_fields = {}
+        extension_field_keys = []
+        if selected_object_dict.extensible_size > 0:
+            last_input_field = input_fields_keys[-1]
+            extension_fields = input_fields[last_input_field]
+            extension_field_keys = list(extension_fields.keys())
+            input_fields_keys.pop() # remove last item
         # resize the number of rows if necessary
-        current_rows, new_rows = (self.main_grid.GetNumberRows(), len(input_fields))
+        repeat_extension_fields = 4
+        current_rows, new_rows = (self.main_grid.GetNumberRows(), len(input_fields) + len(extension_fields) * repeat_extension_fields)
         if new_rows < current_rows:
             self.main_grid.DeleteRows(0, current_rows - new_rows, True)
         if new_rows > current_rows:
             self.main_grid.AppendRows(new_rows - current_rows)
-        for counter, input_field in enumerate(input_fields):
+        for counter, input_field in enumerate(input_fields_keys):
             current_field = input_fields[input_field]
             if "field_name_with_spaces" in current_field:
                 self.main_grid.SetRowLabelValue(counter, input_fields[input_field]["field_name_with_spaces"])
             else:
                 self.main_grid.SetRowLabelValue(counter, input_field)
+        field_count = len(input_fields)
+        for repeat in range(1, repeat_extension_fields + 1):
+            for counter, extension_field in enumerate(extension_field_keys):
+                current_field = extension_fields[extension_field]
+                if "field_name_with_spaces" in current_field:
+                    self.main_grid.SetRowLabelValue(counter + field_count, extension_fields[extension_field]["field_name_with_spaces"] + "-" + str(repeat).zfill(3))
+                else:
+                    self.main_grid.SetRowLabelValue(counter + field_count, extension_fields + "-" + str(repeat).zfill(3))
+            field_count += len(extension_fields)
         self.main_grid.SetRowLabelSize(300)
         self.main_grid.SetRowLabelAlignment(wx.ALIGN_LEFT,wx.ALIGN_TOP)
 
