@@ -23,6 +23,7 @@ class EpJsonEditorFrame(wx.Frame):
         self.object_list_tree = None
         self.object_list_root = None
         self.input_grid = None
+        self.current_file  = {}
         self.create_gui()
 
     def create_gui(self):
@@ -127,10 +128,11 @@ class EpJsonEditorFrame(wx.Frame):
 
     def load_current_file(self, path_name):
         if os.path.exists(path_name):
-            self.current_file = path_name
+            self.current_file_path = path_name
             self.SetTitle(f"epJSON Editor - {path_name}")
+            with open(path_name) as input_file:
+                self.current_file = json.load(input_file)
             self.Refresh()
-
 
     def OnClose(self, event):
         # deinitialize the frame manager
@@ -162,11 +164,23 @@ class EpJsonEditorFrame(wx.Frame):
             input_fields_keys.pop() # remove last item
         # resize the number of rows if necessary
         repeat_extension_fields = 4
-        current_rows, new_rows = (self.main_grid.GetNumberRows(), len(input_fields) + len(extension_fields) * repeat_extension_fields)
+        current_rows = self.main_grid.GetNumberRows()
+        new_rows = len(input_fields) + len(extension_fields) * repeat_extension_fields
         if new_rows < current_rows:
             self.main_grid.DeleteRows(0, current_rows - new_rows, True)
         if new_rows > current_rows:
             self.main_grid.AppendRows(new_rows - current_rows)
+        #resize the number of columns to be the number of input objects
+        current_columns = self.main_grid.GetNumberCols()
+        if selected_object_name in self.current_file:
+            new_columns = len(self.current_file[selected_object_name]) + 1
+        else:
+            new_columns = 2
+        if new_columns < current_columns:
+            self.main_grid.DeleteCols(0, current_columns - new_columns, True)
+        if new_columns > current_columns:
+            self.main_grid.AppendCols(new_columns - current_columns)
+
         for counter, input_field in enumerate(input_fields_keys):
             current_field = input_fields[input_field]
             if "field_name_with_spaces" in current_field:
@@ -191,6 +205,21 @@ class EpJsonEditorFrame(wx.Frame):
                     self.main_grid.SetCellValue(counter + field_count, 0, current_field["units"])
                 #self.main_grid.SetCellBackgroundColour(counter + field_count, 0, wx.LIGHT_GREY)
             field_count += len(extension_fields)
+
+        max_row = self.main_grid.GetNumberRows()
+        max_col = self.main_grid.GetNumberCols()
+        if selected_object_name in self.current_file:
+            active_input_objects = self.current_file[selected_object_name]
+            for input_object_counter, active_input_object in enumerate(active_input_objects):
+                for field_counter, input_field in enumerate(input_fields_keys):
+                    if input_object_counter < max_col:
+                        if field_counter < max_row:
+                            if input_field == "name":
+                                self.main_grid.SetCellValue(field_counter, input_object_counter + 1, active_input_object)
+                            elif input_field in active_input_objects[active_input_object]:
+                                self.main_grid.SetCellValue(field_counter, input_object_counter + 1, str(active_input_objects[active_input_object][input_field]))
+
+
         self.main_grid.SetRowLabelSize(300)
         self.main_grid.SetRowLabelAlignment(wx.ALIGN_LEFT,wx.ALIGN_TOP)
 
