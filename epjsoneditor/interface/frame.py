@@ -4,8 +4,6 @@ import wx.lib.agw.aui as aui
 import os
 import json
 
-from wx import Panel
-
 from epjsoneditor.schemainputobject import SchemaInputObject
 
 
@@ -19,11 +17,12 @@ class EpJsonEditorFrame(wx.Frame):
 
         self.data_dictionary = {}
         self.create_data_dictionary()
-
+        self.explanation_text = None
         self.object_list_tree = None
         self.object_list_root = None
-        self.input_grid = None
-        self.current_file  = {}
+        self.main_grid = None
+        self.current_file_path = None
+        self.current_file = {}
         self.create_gui()
 
     def create_gui(self):
@@ -39,8 +38,8 @@ class EpJsonEditorFrame(wx.Frame):
             self.object_list_tree.Expand(child)
 
         self.explanation_text = wx.TextCtrl(self, -1, "Explanation of the selected input object and field",
-                            wx.DefaultPosition, wx.Size(200, 150),
-                            wx.NO_BORDER | wx.TE_MULTILINE)
+                                            wx.DefaultPosition, wx.Size(200, 150),
+                                            wx.NO_BORDER | wx.TE_MULTILINE)
 
         text3 = wx.TextCtrl(self, -1, "Pane 3 - sample text",
                             wx.DefaultPosition, wx.Size(200, 150),
@@ -49,7 +48,6 @@ class EpJsonEditorFrame(wx.Frame):
         text4 = wx.TextCtrl(self, -1, "Main content window",
                             wx.DefaultPosition, wx.Size(600, 650),
                             wx.NO_BORDER | wx.TE_MULTILINE)
-
 
         # add the panes to the manager
         self._mgr.AddPane(text4, aui.AuiPaneInfo().CenterPane().Name("text_content"))
@@ -73,7 +71,7 @@ class EpJsonEditorFrame(wx.Frame):
 
         self.create_toolbar()
 
-        self.Bind(wx.EVT_CLOSE, self.OnClose)
+        self.Bind(wx.EVT_CLOSE, self.handle_close)
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.select_object_list_item, self.object_list_tree)
 
     def create_grid(self):
@@ -98,8 +96,8 @@ class EpJsonEditorFrame(wx.Frame):
         tb1.AddSimpleTool(15, "Redo", wx.ArtProvider.GetBitmap(wx.ART_REDO))
         tb1.AddSeparator()
         tb1.AddSimpleTool(16, "New Obj", wx.ArtProvider.GetBitmap(wx.ART_PLUS))
-        tb1.AddSimpleTool(17, "Dup Obj", wx.ArtProvider.GetBitmap(wx.ART_GO_FORWARD)) # duplicate
-        tb1.AddSimpleTool(18, "Dup Obj + Chg", wx.ArtProvider.GetBitmap(wx.ART_GOTO_LAST)) # duplicate and change
+        tb1.AddSimpleTool(17, "Dup Obj", wx.ArtProvider.GetBitmap(wx.ART_GO_FORWARD))  # duplicate
+        tb1.AddSimpleTool(18, "Dup Obj + Chg", wx.ArtProvider.GetBitmap(wx.ART_GOTO_LAST))  # duplicate and change
         tb1.AddSimpleTool(19, "Del Obj", wx.ArtProvider.GetBitmap(wx.ART_MINUS))
         tb1.AddSimpleTool(20, "Copy Obj", wx.ArtProvider.GetBitmap(wx.ART_COPY))
         tb1.AddSimpleTool(21, "Paste Obj", wx.ArtProvider.GetBitmap(wx.ART_PASTE))
@@ -122,7 +120,7 @@ class EpJsonEditorFrame(wx.Frame):
                 return     # the user changed their mind
             path_name = fileDialog.GetPath()
             try:
-               self.load_current_file(path_name)
+                self.load_current_file(path_name)
             except IOError:
                 wx.LogError(f"Cannot open file {path_name}")
 
@@ -134,23 +132,22 @@ class EpJsonEditorFrame(wx.Frame):
                 self.current_file = json.load(input_file)
             self.Refresh()
 
-    def OnClose(self, event):
+    def handle_close(self, event):
         # deinitialize the frame manager
         self._mgr.UnInit()
         event.Skip()
 
     def select_object_list_item(self, event):
         selected_object_name = self.object_list_tree.GetItemText(event.GetItem())
-        explanation = selected_object_name + os.linesep + os.linesep \
-                      + self.data_dictionary[selected_object_name].memo
+        explanation = selected_object_name + os.linesep + os.linesep + self.data_dictionary[selected_object_name].memo
         self.explanation_text.Value = explanation
         self.update_grid(selected_object_name)
 
     def update_grid(self, selected_object_name):
-        self.main_grid.FreezeTo(0,1)
+        self.main_grid.FreezeTo(0, 1)
         self.main_grid.SetCornerLabelValue("Field")
-        self.main_grid.SetColLabelValue(0,"Units")
-        self.main_grid.SetColLabelValue(1,"Obj1")
+        self.main_grid.SetColLabelValue(0, "Units")
+        self.main_grid.SetColLabelValue(1, "Obj1")
         print(selected_object_name)
         selected_object_dict = self.data_dictionary[selected_object_name]
         input_fields = selected_object_dict.input_fields
@@ -161,7 +158,7 @@ class EpJsonEditorFrame(wx.Frame):
             last_input_field = input_fields_keys[-1]
             extension_fields = input_fields[last_input_field]
             extension_field_keys = list(extension_fields.keys())
-            input_fields_keys.pop() # remove last item
+            input_fields_keys.pop()  # remove last item
         # resize the number of rows if necessary
         repeat_extension_fields = 4
         current_rows = self.main_grid.GetNumberRows()
@@ -170,7 +167,7 @@ class EpJsonEditorFrame(wx.Frame):
             self.main_grid.DeleteRows(0, current_rows - new_rows, True)
         if new_rows > current_rows:
             self.main_grid.AppendRows(new_rows - current_rows)
-        #resize the number of columns to be the number of input objects
+        # resize the number of columns to be the number of input objects
         current_columns = self.main_grid.GetNumberCols()
         if selected_object_name in self.current_file:
             new_columns = len(self.current_file[selected_object_name]) + 1
@@ -190,7 +187,7 @@ class EpJsonEditorFrame(wx.Frame):
             self.main_grid.SetCellValue(counter, 0, "")
             if "units" in current_field:
                 self.main_grid.SetCellValue(counter, 0, current_field["units"])
-            #self.main_grid.SetCellBackgroundColour(counter, 0, wx.LIGHT_GREY)
+            # self.main_grid.SetCellBackgroundColour(counter, 0, wx.LIGHT_GREY)
 
         field_count = len(input_fields)
         for repeat in range(1, repeat_extension_fields + 1):
@@ -203,7 +200,7 @@ class EpJsonEditorFrame(wx.Frame):
                 self.main_grid.SetCellValue(counter + field_count, 0, "")
                 if "units" in current_field:
                     self.main_grid.SetCellValue(counter + field_count, 0, current_field["units"])
-                #self.main_grid.SetCellBackgroundColour(counter + field_count, 0, wx.LIGHT_GREY)
+                # self.main_grid.SetCellBackgroundColour(counter + field_count, 0, wx.LIGHT_GREY)
             field_count += len(extension_fields)
 
         max_row = self.main_grid.GetNumberRows()
@@ -219,9 +216,8 @@ class EpJsonEditorFrame(wx.Frame):
                             elif input_field in active_input_objects[active_input_object]:
                                 self.main_grid.SetCellValue(field_counter, input_object_counter + 1, str(active_input_objects[active_input_object][input_field]))
 
-
         self.main_grid.SetRowLabelSize(300)
-        self.main_grid.SetRowLabelAlignment(wx.ALIGN_LEFT,wx.ALIGN_TOP)
+        self.main_grid.SetRowLabelAlignment(wx.ALIGN_LEFT, wx.ALIGN_TOP)
 
     def create_data_dictionary(self):
         """
