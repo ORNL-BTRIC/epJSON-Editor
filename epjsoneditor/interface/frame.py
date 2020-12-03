@@ -142,12 +142,13 @@ class EpJsonEditorFrame(wx.Frame):
         explanation = selected_object_name + os.linesep + os.linesep + self.data_dictionary[selected_object_name].memo
         self.explanation_text.Value = explanation
         self.update_grid(selected_object_name)
+        self.Refresh()
 
     def update_grid(self, selected_object_name):
+        self.main_grid.ClearGrid()
         self.main_grid.FreezeTo(0, 1)
         self.main_grid.SetCornerLabelValue("Field")
         self.main_grid.SetColLabelValue(0, "Units")
-        self.main_grid.SetColLabelValue(1, "Obj1")
         print(selected_object_name)
         selected_object_dict = self.data_dictionary[selected_object_name]
         input_fields = selected_object_dict.input_fields
@@ -159,6 +160,8 @@ class EpJsonEditorFrame(wx.Frame):
             extension_fields = input_fields[last_input_field]
             extension_field_keys = list(extension_fields.keys())
             input_fields_keys.pop()  # remove last item
+
+            # next time start here and add function for maximum size of all extensible fields.
         # resize the number of rows if necessary
         repeat_extension_fields = 4
         current_rows = self.main_grid.GetNumberRows()
@@ -172,11 +175,13 @@ class EpJsonEditorFrame(wx.Frame):
         if selected_object_name in self.current_file:
             new_columns = len(self.current_file[selected_object_name]) + 1
         else:
-            new_columns = 2
+            new_columns = 1
         if new_columns < current_columns:
             self.main_grid.DeleteCols(0, current_columns - new_columns, True)
         if new_columns > current_columns:
             self.main_grid.AppendCols(new_columns - current_columns)
+        for counter in range(1, new_columns):
+            self.main_grid.SetColLabelValue(counter, f"Obj{counter}")
 
         for counter, input_field in enumerate(input_fields_keys):
             current_field = input_fields[input_field]
@@ -189,7 +194,7 @@ class EpJsonEditorFrame(wx.Frame):
                 self.main_grid.SetCellValue(counter, 0, current_field["units"])
             # self.main_grid.SetCellBackgroundColour(counter, 0, wx.LIGHT_GREY)
 
-        field_count = len(input_fields)
+        field_count = len(input_fields) - 1
         for repeat in range(1, repeat_extension_fields + 1):
             for counter, extension_field in enumerate(extension_field_keys):
                 current_field = extension_fields[extension_field]
@@ -216,6 +221,7 @@ class EpJsonEditorFrame(wx.Frame):
                             elif input_field in active_input_objects[active_input_object]:
                                 self.main_grid.SetCellValue(field_counter, input_object_counter + 1, str(active_input_objects[active_input_object][input_field]))
 
+        self.main_grid.AutoSizeColumns()
         self.main_grid.SetRowLabelSize(300)
         self.main_grid.SetRowLabelAlignment(wx.ALIGN_LEFT, wx.ALIGN_TOP)
 
