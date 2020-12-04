@@ -5,7 +5,7 @@ import os
 import json
 
 from epjsoneditor.schemainputobject import SchemaInputObject
-
+from epjsoneditor.interface.settings_dialog import SettingsDialog
 
 class EpJsonEditorFrame(wx.Frame):
 
@@ -22,6 +22,7 @@ class EpJsonEditorFrame(wx.Frame):
         self.object_list_root = None
         self.main_grid = None
         self.current_file_path = None
+        self.use_si_units = True
         self.current_file = {}
         self.create_gui()
 
@@ -101,12 +102,12 @@ class EpJsonEditorFrame(wx.Frame):
         tb1.AddSimpleTool(19, "Del Obj", wx.ArtProvider.GetBitmap(wx.ART_MINUS))
         tb1.AddSimpleTool(20, "Copy Obj", wx.ArtProvider.GetBitmap(wx.ART_COPY))
         tb1.AddSimpleTool(21, "Paste Obj", wx.ArtProvider.GetBitmap(wx.ART_PASTE))
+        # tb1.AddSeparator()
+        # tb1.AddTool(22, "IP Units", wx.ArtProvider.GetBitmap(wx.ART_GO_UP), wx.NullBitmap, kind=wx.ITEM_RADIO)
+        # tb1.AddTool(23, "SI Units", wx.ArtProvider.GetBitmap(wx.ART_GO_DOWN), wx.NullBitmap, kind=wx.ITEM_RADIO)
         tb1.AddSeparator()
-        tb1.AddTool(22, "IP Units", wx.ArtProvider.GetBitmap(wx.ART_GO_UP), wx.NullBitmap, kind=wx.ITEM_RADIO)
-
-        tb1.AddTool(23, "SI Units", wx.ArtProvider.GetBitmap(wx.ART_GO_DOWN), wx.NullBitmap, kind=wx.ITEM_RADIO)
-        tb1.AddSeparator()
-        tb1.AddSimpleTool(25, "Settings", wx.ArtProvider.GetBitmap(wx.ART_EXECUTABLE_FILE))
+        tb_settings = tb1.AddSimpleTool(25, "Settings", wx.ArtProvider.GetBitmap(wx.ART_EXECUTABLE_FILE))
+        self.Bind(wx.EVT_TOOL, self.handle_settings_toolbar_button, tb_settings)
         tb1.AddSimpleTool(26, "Help", wx.ArtProvider.GetBitmap(wx.ART_HELP))
         tb1.Realize()
         self._mgr.AddPane(tb1, aui.AuiPaneInfo().Name("tb1").Caption("Primary Toolbar").
@@ -123,6 +124,15 @@ class EpJsonEditorFrame(wx.Frame):
                 self.load_current_file(path_name)
             except IOError:
                 wx.LogError(f"Cannot open file {path_name}")
+
+    def handle_settings_toolbar_button(self, event):
+        settings_dialog = SettingsDialog(None, title='Settings')
+        settings_dialog.use_si_units = self.use_si_units
+        return_value = settings_dialog.ShowModal()
+        if return_value == wx.ID_OK:
+            self.use_si_units = settings_dialog.use_si_units
+        print(self.use_si_units)
+        settings_dialog.Destroy()
 
     def load_current_file(self, path_name):
         if os.path.exists(path_name):
