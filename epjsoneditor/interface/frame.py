@@ -21,8 +21,11 @@ class EpJsonEditorFrame(wx.Frame):
         self.object_list_tree = None
         self.object_list_root = None
         self.main_grid = None
+        self.selected_object_name = None
         self.current_file_path = None
         self.use_si_units = True
+        self.unit_conversions = {}
+        self.read_unit_conversions()
         self.current_file = {}
         self.create_gui()
 
@@ -127,12 +130,13 @@ class EpJsonEditorFrame(wx.Frame):
 
     def handle_settings_toolbar_button(self, event):
         settings_dialog = SettingsDialog(None, title='Settings')
-        settings_dialog.use_si_units = self.use_si_units
+        settings_dialog.set_settings(self.use_si_units)
         return_value = settings_dialog.ShowModal()
         if return_value == wx.ID_OK:
             self.use_si_units = settings_dialog.use_si_units
         print(self.use_si_units)
         settings_dialog.Destroy()
+        self.update_grid(self.selected_object_name)
 
     def load_current_file(self, path_name):
         if os.path.exists(path_name):
@@ -148,10 +152,10 @@ class EpJsonEditorFrame(wx.Frame):
         event.Skip()
 
     def select_object_list_item(self, event):
-        selected_object_name = self.object_list_tree.GetItemText(event.GetItem())
-        explanation = selected_object_name + os.linesep + os.linesep + self.data_dictionary[selected_object_name].memo
+        self.selected_object_name = self.object_list_tree.GetItemText(event.GetItem())
+        explanation = self.selected_object_name + os.linesep + os.linesep + self.data_dictionary[self.selected_object_name].memo
         self.explanation_text.Value = explanation
-        self.update_grid(selected_object_name)
+        self.update_grid(self.selected_object_name)
         self.Refresh()
 
     def update_grid(self, selected_object_name):
@@ -161,6 +165,7 @@ class EpJsonEditorFrame(wx.Frame):
         self.main_grid.SetColLabelValue(0, "Units")
         print(selected_object_name)
         selected_object_dict = self.data_dictionary[selected_object_name]
+        name_to_field_map = {}
         input_fields = selected_object_dict.input_fields
         input_fields_keys = list(input_fields.keys())
         extension_fields = {}
@@ -198,11 +203,16 @@ class EpJsonEditorFrame(wx.Frame):
             current_field = input_fields[input_field]
             if "field_name_with_spaces" in current_field:
                 self.main_grid.SetRowLabelValue(counter, current_field["field_name_with_spaces"])
+                name_to_field_map[current_field["field_name_with_spaces"]] = input_field
             else:
                 self.main_grid.SetRowLabelValue(counter, input_field)
+                name_to_field_map[input_field] = input_field
             self.main_grid.SetCellValue(counter, 0, "")
             if "units" in current_field:
-                self.main_grid.SetCellValue(counter, 0, current_field["units"])
+                if self.use_si_units:
+                    self.main_grid.SetCellValue(counter, 0, current_field["units"])
+                else:
+                    self.main_grid.SetCellValue(counter, 0, self.unit_conversions[current_field["units"]]["ip_unit"])
             # self.main_grid.SetCellBackgroundColour(counter, 0, wx.LIGHT_GREY)
         # add field names and units for the extension fields
         field_count = len(input_fields) - 1
@@ -210,12 +220,19 @@ class EpJsonEditorFrame(wx.Frame):
             for counter, extension_field in enumerate(extension_field_keys):
                 current_field = extension_fields[extension_field]
                 if "field_name_with_spaces" in current_field:
-                    self.main_grid.SetRowLabelValue(counter + field_count, current_field["field_name_with_spaces"] + "-" + str(repeat).zfill(3))
+                    field_name_with_index = current_field["field_name_with_spaces"] + "-" + str(repeat).zfill(3)
+                    self.main_grid.SetRowLabelValue(counter + field_count, field_name_with_index)
+                    name_to_field_map[field_name_with_index] = extension_field
                 else:
-                    self.main_grid.SetRowLabelValue(counter + field_count, extension_fields + "-" + str(repeat).zfill(3))
+                    field_name_with_index = extension_fields + "-" + str(repeat).zfill(3)
+                    self.main_grid.SetRowLabelValue(counter + field_count, field_name_with_index)
+                    name_to_field_map[field_name_with_index] = extension_field
                 self.main_grid.SetCellValue(counter + field_count, 0, "")
                 if "units" in current_field:
-                    self.main_grid.SetCellValue(counter + field_count, 0, current_field["units"])
+                    if self.use_si_units:
+                        self.main_grid.SetCellValue(counter + field_count, 0, current_field["units"])
+                    else:
+                        self.main_grid.SetCellValue(counter + field_count, 0, self.unit_conversions[current_field["units"]]["ip_unit"])
                 # self.main_grid.SetCellBackgroundColour(counter + field_count, 0, wx.LIGHT_GREY)
             field_count += len(extension_fields)
         # populate the grid with the field values from the current file
@@ -263,3 +280,12 @@ class EpJsonEditorFrame(wx.Frame):
             epschema = json.load(schema_file)
             for object_name, json_properties in epschema["properties"].items():
                 self.data_dictionary[object_name] = SchemaInputObject(json_properties)
+
+    def read_unit_conversions(self):
+        """
+         Read the unit conversion file as a dictionary
+        """
+        with open("./support/unit_conversions.json") as unit_conversion_file:
+            self.unit_conversions = json.load(unit_conversion_file)
+            for unit_conversion in self.unit_conversions:
+                print(unit_conversion)

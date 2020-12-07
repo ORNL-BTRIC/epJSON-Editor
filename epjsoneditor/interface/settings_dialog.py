@@ -19,11 +19,8 @@ class SettingsDialog(wx.Dialog):
 
         unit_options = ["SI/metric", "Inch-Pound"]
         self.units_radio_box = wx.RadioBox(self, -1, "Unit System", wx.DefaultPosition, wx.DefaultSize, unit_options, 1, wx.RA_SPECIFY_COLS)
+        self.units_radio_box.SetSelection(0)
         self.Bind(wx.EVT_RADIOBOX, self.handle_unit_option_event, self.units_radio_box)
-        if self.use_si_units:
-            self.units_radio_box.SetSelection(0)
-        else:
-            self.units_radio_box.SetSelection(1)
 
         hbox_ok_cancel = wx.BoxSizer(wx.HORIZONTAL)
         ok_button = wx.Button(self, wx.ID_OK, label='Ok')
@@ -41,6 +38,13 @@ class SettingsDialog(wx.Dialog):
 
         self.SetSizer(vbox)
         self.Show(True)
+
+    def set_settings(self, use_si_units):
+        self.use_si_units = use_si_units
+        if self.use_si_units:
+            self.units_radio_box.SetSelection(0)
+        else:
+            self.units_radio_box.SetSelection(1)
 
     def handle_unit_option_event(self, event):
         print(self.units_radio_box.GetStringSelection())

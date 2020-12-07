@@ -1,0 +1,953 @@
+{
+	"m": {
+		"si_unit": "m",
+		"ip_unit": "ft",
+		"multiplier": 3.28083989501312,
+		"alternative": false,
+		"named_unit_kind": "Distance"
+	},
+	"m___in": {
+		"si_unit": "m",
+		"ip_unit": "in",
+		"multiplier": 39.3700787401575,
+		"alternative": true
+	},
+	"W": {
+		"si_unit": "W",
+		"ip_unit": "Btu/h",
+		"multiplier": 3.4121412858518,
+		"alternative": false,
+		"named_unit_kind": "Capacity"
+	},
+	"W___W": {
+		"si_unit": "W",
+		"ip_unit": "W",
+		"multiplier": 1,
+		"alternative": true,
+		"named_unit_kind": "Power"
+	},
+	"m3/s": {
+		"si_unit": "m3/s",
+		"ip_unit": "ft3/min",
+		"multiplier": 2118.88000328931,
+		"alternative": false,
+		"named_unit_kind": "VolumetricFlow"
+	},
+	"m3/s___gal/min": {
+		"si_unit": "m3/s",
+		"ip_unit": "gal/min",
+		"multiplier": 15850.3222370511,
+		"alternative": true
+	},
+	"C": {
+		"si_unit": "C",
+		"ip_unit": "F",
+		"multiplier": 1.8,
+		"offset": 32,
+		"alternative": false,
+		"named_unit_kind": "Temperature"
+	},
+	"kg/J": {
+		"si_unit": "kg/J",
+		"ip_unit": "lb/Btu",
+		"multiplier": 2325.83774250441,
+		"alternative": false
+	},
+	"Pa": {
+		"si_unit": "Pa",
+		"ip_unit": "psi",
+		"multiplier": 0.000145037743897283,
+		"alternative": false,
+		"named_unit_kind": "Pressure"
+	},
+	"Pa___inHg": {
+		"si_unit": "Pa",
+		"ip_unit": "inHg",
+		"multiplier": 0.00029613,
+		"alternative": true
+	},
+	"Pa___inH2O": {
+		"si_unit": "Pa",
+		"ip_unit": "inH2O",
+		"multiplier": 0.00401463,
+		"alternative": true
+	},
+	"Pa___ftH2O": {
+		"si_unit": "Pa",
+		"ip_unit": "ftH2O",
+		"multiplier": 0.00033455,
+		"alternative": true
+	},
+	"W/m-K": {
+		"si_unit": "W/m-K",
+		"ip_unit": "Btu-in/h-ft2-F",
+		"multiplier": 6.93481276005548,
+		"alternative": false,
+		"named_unit_kind": "Conductivity"
+	},
+	"W/K": {
+		"si_unit": "W/K",
+		"ip_unit": "Btu/h-F",
+		"multiplier": 1.89563404769544,
+		"alternative": false
+	},
+	"deltaC": {
+		"si_unit": "deltaC",
+		"ip_unit": "deltaF",
+		"multiplier": 1.8,
+		"alternative": false,
+		"named_unit_kind": "DeltaTemperature"
+	},
+	"m2": {
+		"si_unit": "m2",
+		"ip_unit": "ft2",
+		"multiplier": 10.7639104167097,
+		"alternative": false
+	},
+	"K": {
+		"si_unit": "K",
+		"ip_unit": "R",
+		"multiplier": 1.8,
+		"alternative": false
+	},
+	"(kg/s)/W": {
+		"si_unit": "(kg/s)/W",
+		"ip_unit": "(lbm/sec)/(Btu/hr)",
+		"multiplier": 0.646078115385742,
+		"alternative": false
+	},
+	"J/kg": {
+		"si_unit": "J/kg",
+		"ip_unit": "Btu/lb",
+		"multiplier": 0.00042986,
+		"offset": 7.686,
+		"alternative": false,
+		"named_unit_kind": "Enthalpy"
+	},
+	"kg-H2O/kg-air": {
+		"si_unit": "kg-H2O/kg-air",
+		"ip_unit": "lb-H2O/lb-air",
+		"multiplier": 1,
+		"alternative": false
+	},
+	"kJ/kg": {
+		"si_unit": "kJ/kg",
+		"ip_unit": "Btu/lb",
+		"multiplier": 0.429925,
+		"alternative": false
+	},
+	"lux": {
+		"si_unit": "lux",
+		"ip_unit": "foot-candles",
+		"multiplier": 0.092902267,
+		"alternative": false
+	},
+	"kg/m3": {
+		"si_unit": "kg/m3",
+		"ip_unit": "lb/ft3",
+		"multiplier": 0.062428,
+		"alternative": false,
+		"named_unit_kind": "Density"
+	},
+	"kg/s": {
+		"si_unit": "kg/s",
+		"ip_unit": "lb/s",
+		"multiplier": 2.20462247603796,
+		"alternative": false,
+		"named_unit_kind": "MassFlow"
+	},
+	"kg/s-m": {
+		"si_unit": "kg/s-m",
+		"ip_unit": "lb/s-ft",
+		"multiplier": 0.67196893069637,
+		"alternative": false
+	},
+	"m3": {
+		"si_unit": "m3",
+		"ip_unit": "ft3",
+		"multiplier": 35.3146667214886,
+		"alternative": false
+	},
+	"m3___gal": {
+		"si_unit": "m3",
+		"ip_unit": "gal",
+		"multiplier": 264.172037284185,
+		"alternative": true
+	},
+	"W/m2-K": {
+		"si_unit": "W/m2-K",
+		"ip_unit": "Btu/h-ft2-F",
+		"multiplier": 0.176110194261872,
+		"alternative": false,
+		"named_unit_kind": "ConvectionCoefficient"
+	},
+	"1/m": {
+		"si_unit": "1/m",
+		"ip_unit": "1/ft",
+		"multiplier": 0.3048,
+		"alternative": false
+	},
+	"J/kg-K": {
+		"si_unit": "J/kg-K",
+		"ip_unit": "Btu/lb-F",
+		"multiplier": 0.000239005736137667,
+		"alternative": false,
+		"named_unit_kind": "SpecificHeat"
+	},
+	"J/m3-K": {
+		"si_unit": "J/m3-K",
+		"ip_unit": "Btu/ft3-F",
+		"multiplier": 1.49237004739337E-05,
+		"alternative": false
+	},
+	"m/s": {
+		"si_unit": "m/s",
+		"ip_unit": "ft/min",
+		"multiplier": 196.850393700787,
+		"alternative": false,
+		"named_unit_kind": "Velocity"
+	},
+	"m/s___miles/hr": {
+		"si_unit": "m/s",
+		"ip_unit": "miles/hr",
+		"multiplier": 2.2369362920544,
+		"alternative": true
+	},
+	"m2-K/W": {
+		"si_unit": "m2-K/W",
+		"ip_unit": "ft2-F-hr/Btu",
+		"multiplier": 5.678263,
+		"alternative": false
+	},
+	"W/m2": {
+		"si_unit": "W/m2",
+		"ip_unit": "Btu/h-ft2",
+		"multiplier": 0.316957210776545,
+		"alternative": false
+	},
+	"A/K": {
+		"si_unit": "A/K",
+		"ip_unit": "A/F",
+		"multiplier": 0.555555555555556,
+		"alternative": false
+	},
+	"g/kg": {
+		"si_unit": "g/kg",
+		"ip_unit": "grains/lb",
+		"multiplier": 7,
+		"alternative": false
+	},
+	"g/m-s": {
+		"si_unit": "g/m-s",
+		"ip_unit": "lb/ft-s",
+		"multiplier": 0.000671968949659,
+		"alternative": false
+	},
+	"g/m-s-K": {
+		"si_unit": "g/m-s-K",
+		"ip_unit": "lb/ft-s-F",
+		"multiplier": 0.000373574867724868,
+		"alternative": false
+	},
+	"J/K": {
+		"si_unit": "J/K",
+		"ip_unit": "Btu/F",
+		"multiplier": 526.565,
+		"alternative": false
+	},
+	"J/kg-K2": {
+		"si_unit": "J/kg-K2",
+		"ip_unit": "Btu/lb-F2",
+		"multiplier": 0.000132889924714692,
+		"alternative": false
+	},
+	"J/m3": {
+		"si_unit": "J/m3",
+		"ip_unit": "Btu/ft3",
+		"multiplier": 2.68096514745308E-05,
+		"alternative": false
+	},
+	"kg/kg-K": {
+		"si_unit": "kg/kg-K",
+		"ip_unit": "lb/lb-F",
+		"multiplier": 0.555555555555556,
+		"alternative": false
+	},
+	"kPa": {
+		"si_unit": "kPa",
+		"ip_unit": "psi",
+		"multiplier": 0.145038,
+		"alternative": false
+	},
+	"kPa___inHg": {
+		"si_unit": "kPa",
+		"ip_unit": "inHg",
+		"multiplier": 0.29523,
+		"alternative": true
+	},
+	"m2/s": {
+		"si_unit": "m2/s",
+		"ip_unit": "ft2/s",
+		"multiplier": 10.7639104167097,
+		"alternative": false
+	},
+	"m3/kg": {
+		"si_unit": "m3/kg",
+		"ip_unit": "ft3/lb",
+		"multiplier": 16.018,
+		"alternative": false
+	},
+	"m3/m3": {
+		"si_unit": "m3/m3",
+		"ip_unit": "ft3/ft3",
+		"multiplier": 1,
+		"alternative": false
+	},
+	"N-s/m2": {
+		"si_unit": "N-s/m2",
+		"ip_unit": "lbf-s/ft2",
+		"multiplier": 0.0208857913669065,
+		"alternative": false,
+		"named_unit_kind": "Viscosity"
+	},
+	"V/K": {
+		"si_unit": "V/K",
+		"ip_unit": "V/F",
+		"multiplier": 0.555555555555556,
+		"alternative": false
+	},
+	"W/m-K2": {
+		"si_unit": "W/m-K2",
+		"ip_unit": "Btu/h-F2-ft",
+		"multiplier": 0.321418310071648,
+		"alternative": false
+	},
+	"m3/s-m": {
+		"si_unit": "m3/s-m",
+		"ip_unit": "ft3/min-ft",
+		"multiplier": 645.89,
+		"alternative": false
+	},
+	"deg": {
+		"si_unit": "deg",
+		"ip_unit": "deg",
+		"multiplier": 1,
+		"alternative": false,
+		"named_unit_kind": "Angle"
+	},
+	"hr": {
+		"si_unit": "hr",
+		"ip_unit": "hr",
+		"multiplier": 1,
+		"alternative": false
+	},
+	"A": {
+		"si_unit": "A",
+		"ip_unit": "A",
+		"multiplier": 1,
+		"alternative": false
+	},
+	"dimensionless": {
+		"si_unit": "dimensionless",
+		"ip_unit": "dimensionless",
+		"multiplier": 1,
+		"alternative": false,
+		"named_unit_kind": "Dimensionless"
+	},
+	"V": {
+		"si_unit": "V",
+		"ip_unit": "V",
+		"multiplier": 1,
+		"alternative": false
+	},
+	"A/V": {
+		"si_unit": "A/V",
+		"ip_unit": "A/V",
+		"multiplier": 1,
+		"alternative": false
+	},
+	"eV": {
+		"si_unit": "eV",
+		"ip_unit": "eV",
+		"multiplier": 1,
+		"alternative": false
+	},
+	"percent": {
+		"si_unit": "percent",
+		"ip_unit": "percent",
+		"multiplier": 1,
+		"alternative": false
+	},
+	"percentage (as a real decimal)": {
+		"si_unit": "percentage (as a real decimal)",
+		"ip_unit": "percentage (as a real decimal)",
+		"multiplier": 1,
+		"alternative": false
+	},
+	"s": {
+		"si_unit": "s",
+		"ip_unit": "s",
+		"multiplier": 1,
+		"alternative": false
+	},
+	"W/m2 or deg C": {
+		"si_unit": "W/m2 or deg C",
+		"ip_unit": "unknown",
+		"multiplier": 1,
+		"alternative": false
+	},
+	"W/m2, W or deg C": {
+		"si_unit": "W/m2, W or deg C",
+		"ip_unit": "unknown",
+		"multiplier": 1,
+		"alternative": false
+	},
+	"1/K": {
+		"si_unit": "1/K",
+		"ip_unit": "1/F",
+		"multiplier": 0.555555555555556,
+		"alternative": false
+	},
+	"J/m2-K": {
+		"si_unit": "J/m2-K",
+		"ip_unit": "Btu/ft2-F",
+		"multiplier": 4.89224766847393E-05,
+		"alternative": false
+	},
+	"ohms": {
+		"si_unit": "ohms",
+		"ip_unit": "ohms",
+		"multiplier": 1,
+		"alternative": false
+	},
+	"cycles/hr": {
+		"si_unit": "cycles/hr",
+		"ip_unit": "cycles/hr",
+		"multiplier": 1,
+		"alternative": false
+	},
+	"kg/kg": {
+		"si_unit": "kg/kg",
+		"ip_unit": "lb/lb",
+		"multiplier": 1,
+		"alternative": false
+	},
+	"J/J": {
+		"si_unit": "J/J",
+		"ip_unit": "Btu/Btu",
+		"multiplier": 1,
+		"alternative": false
+	},
+	"g/GJ": {
+		"si_unit": "g/GJ",
+		"ip_unit": "lb/MWh",
+		"multiplier": 0.00793664091373665,
+		"alternative": false
+	},
+	"L/GJ": {
+		"si_unit": "L/GJ",
+		"ip_unit": "gal/kWh",
+		"multiplier": 0.000951022349025202,
+		"alternative": false
+	},
+	"m3/GJ": {
+		"si_unit": "m3/GJ",
+		"ip_unit": "ft3/MWh",
+		"multiplier": 127.13292,
+		"alternative": false
+	},
+	"m3/s-m2": {
+		"si_unit": "m3/s-m2",
+		"ip_unit": "ft3/min-ft2",
+		"multiplier": 196.85,
+		"alternative": false
+	},
+	"m3/s-person": {
+		"si_unit": "m3/s-person",
+		"ip_unit": "ft3/min-person",
+		"multiplier": 2118.6438,
+		"alternative": false
+	},
+	"W/m2-K2": {
+		"si_unit": "W/m2-K2",
+		"ip_unit": "Btu/h-ft2-F2",
+		"multiplier": 0.097826,
+		"alternative": false
+	},
+	"g/MJ": {
+		"si_unit": "g/MJ",
+		"ip_unit": "lb/MWh",
+		"multiplier": 7.93664091373665,
+		"alternative": false
+	},
+	"L/MJ": {
+		"si_unit": "L/MJ",
+		"ip_unit": "gal/kWh",
+		"multiplier": 0.951022349025202,
+		"alternative": false
+	},
+	"m3/MJ": {
+		"si_unit": "m3/MJ",
+		"ip_unit": "ft3/kWh",
+		"multiplier": 127.13292,
+		"alternative": false
+	},
+	"W/W": {
+		"si_unit": "W/W",
+		"ip_unit": "Btuh/Btuh",
+		"multiplier": 1,
+		"alternative": false
+	},
+	"$/m2": {
+		"si_unit": "$/m2",
+		"ip_unit": "$/ft2",
+		"multiplier": 0.0928939733269818,
+		"alternative": false
+	},
+	"$": {
+		"si_unit": "$",
+		"ip_unit": "$",
+		"multiplier": 1,
+		"alternative": false
+	},
+	"$/kW": {
+		"si_unit": "$/kW",
+		"ip_unit": "$/(kBtuh/h)",
+		"multiplier": 0.293083235638921,
+		"alternative": false
+	},
+	"$/m3": {
+		"si_unit": "$/m3",
+		"ip_unit": "$/ft3",
+		"multiplier": 0.0283127014102352,
+		"alternative": false
+	},
+	"years": {
+		"si_unit": "years",
+		"ip_unit": "years",
+		"multiplier": 1,
+		"alternative": false
+	},
+	"$/(W/K)": {
+		"si_unit": "$/(W/K)",
+		"ip_unit": "$/(Btu/h-F)",
+		"multiplier": 0.52667614683731,
+		"alternative": false
+	},
+	"$/(m3/s)": {
+		"si_unit": "$/(m3/s)",
+		"ip_unit": "$/(ft3/min)",
+		"multiplier": 0.000472000059660808,
+		"alternative": false
+	},
+	"W/m": {
+		"si_unit": "W/m",
+		"ip_unit": "Btu/h-ft",
+		"multiplier": 1.04072,
+		"alternative": false
+	},
+	"minutes": {
+		"si_unit": "minutes",
+		"ip_unit": "minutes",
+		"multiplier": 1,
+		"alternative": false
+	},
+	"cm": {
+		"si_unit": "cm",
+		"ip_unit": "in",
+		"multiplier": 0.3937,
+		"alternative": false
+	},
+	"K/m": {
+		"si_unit": "K/m",
+		"ip_unit": "F/ft",
+		"multiplier": 0.54861322767449,
+		"alternative": false
+	},
+	"W/s": {
+		"si_unit": "W/s",
+		"ip_unit": "W/s",
+		"multiplier": 1,
+		"alternative": false
+	},
+	"kmol": {
+		"si_unit": "kmol",
+		"ip_unit": "kmol",
+		"multiplier": 1,
+		"alternative": false
+	},
+	"J": {
+		"si_unit": "J",
+		"ip_unit": "Wh",
+		"multiplier": 0.000277777777777778,
+		"alternative": false,
+		"named_unit_kind": "Energy"
+	},
+	"GJ": {
+		"si_unit": "GJ",
+		"ip_unit": "ton-hrs",
+		"multiplier": 78.9889415481832,
+		"alternative": false
+	},
+	"days": {
+		"si_unit": "days",
+		"ip_unit": "days",
+		"multiplier": 1,
+		"alternative": false
+	},
+	"kg/m2": {
+		"si_unit": "kg/m2",
+		"ip_unit": "lb/ft2",
+		"multiplier": 0.204794053596664,
+		"alternative": false
+	},
+	"kg": {
+		"si_unit": "kg",
+		"ip_unit": "lb",
+		"multiplier": 2.2046,
+		"alternative": false
+	},
+	"kmol/s": {
+		"si_unit": "kmol/s",
+		"ip_unit": "kmol/s",
+		"multiplier": 1,
+		"alternative": false
+	},
+	"percent/K": {
+		"si_unit": "percent/K",
+		"ip_unit": "percent/F",
+		"multiplier": 0.555555555555556,
+		"alternative": false
+	},
+	"kg/s2": {
+		"si_unit": "kg/s2",
+		"ip_unit": "lb/s2",
+		"multiplier": 2.2046,
+		"alternative": false
+	},
+	"g/mol": {
+		"si_unit": "g/mol",
+		"ip_unit": "lb/mol",
+		"multiplier": 0.0022046,
+		"alternative": false
+	},
+	"deltaJ/kg": {
+		"si_unit": "deltaJ/kg",
+		"ip_unit": "deltaBtu/lb",
+		"multiplier": 0.0004299,
+		"alternative": false
+	},
+	"person/m2": {
+		"si_unit": "person/m2",
+		"ip_unit": "person/ft2",
+		"multiplier": 0.0928939733269818,
+		"alternative": false
+	},
+	"m2/person": {
+		"si_unit": "m2/person",
+		"ip_unit": "ft2/person",
+		"multiplier": 10.764961,
+		"alternative": false
+	},
+	"W/person": {
+		"si_unit": "W/person",
+		"ip_unit": "Btu/h-person",
+		"multiplier": 3.4121412858518,
+		"alternative": false
+	},
+	"W/person___W/person": {
+		"si_unit": "W/person",
+		"ip_unit": "W/person",
+		"multiplier": 1,
+		"alternative": true,
+		"named_unit_kind": "ActivityLevel"
+	},
+	"W/m2___W/m2": {
+		"si_unit": "W/m2",
+		"ip_unit": "W/m2",
+		"multiplier": 1,
+		"alternative": true
+	},
+	"m3/person": {
+		"si_unit": "m3/person",
+		"ip_unit": "ft3/person",
+		"multiplier": 35.3146667214886,
+		"alternative": false
+	},
+	"m3/hr-person": {
+		"si_unit": "m3/hr-person",
+		"ip_unit": "ft3/hr-person",
+		"multiplier": 35.3146667214886,
+		"alternative": false
+	},
+	"m3/m2": {
+		"si_unit": "m3/m2",
+		"ip_unit": "ft3/ft2",
+		"multiplier": 3.28083989501312,
+		"alternative": false
+	},
+	"m3/hr-m2": {
+		"si_unit": "m3/hr-m2",
+		"ip_unit": "ft3/hr-ft2",
+		"multiplier": 3.28083989501312,
+		"alternative": false
+	},
+	"m3/hr": {
+		"si_unit": "m3/hr",
+		"ip_unit": "ft3/hr",
+		"multiplier": 35.3146667214886,
+		"alternative": false
+	},
+	"s/m": {
+		"si_unit": "s/m",
+		"ip_unit": "s/ft",
+		"multiplier": 0.3048,
+		"alternative": false
+	},
+	"W/m2": {
+		"si_unit": "W/m2",
+		"ip_unit": "W/ft2",
+		"multiplier": 0.09290304,
+		"alternative": false
+	},
+	"m2/m": {
+		"si_unit": "m2/m",
+		"ip_unit": "ft2/ft",
+		"multiplier": 3.28083989501312,
+		"alternative": false
+	},
+	"L/day": {
+		"si_unit": "L/day",
+		"ip_unit": "pint/day",
+		"multiplier": 2.11337629827348,
+		"alternative": false
+	},
+	"L/kWh": {
+		"si_unit": "L/kWh",
+		"ip_unit": "pint/kWh",
+		"multiplier": 2.11337629827348,
+		"alternative": false
+	},
+	"kg/Pa-s-m2": {
+		"si_unit": "kg/Pa-s-m2",
+		"ip_unit": "lb/psi-s-ft2",
+		"multiplier": 1412.00523459398,
+		"alternative": false
+	},
+	"m/hr": {
+		"si_unit": "m/hr",
+		"ip_unit": "ft/hr",
+		"multiplier": 3.28083989501312,
+		"alternative": false,
+		"named_unit_kind": "PrecipitationRate"
+	},
+	"Mode": {
+		"si_unit": "Mode",
+		"ip_unit": "Mode",
+		"multiplier": 1,
+		"alternative": false,
+		"named_unit_kind": "Mode"
+	},
+	"Control": {
+		"si_unit": "Control",
+		"ip_unit": "Control",
+		"multiplier": 1,
+		"alternative": false,
+		"named_unit_kind": "Control"
+	},
+	"Availability": {
+		"si_unit": "Availability",
+		"ip_unit": "Availability",
+		"multiplier": 1,
+		"alternative": false,
+		"named_unit_kind": "Availability"
+	},
+	"rev/min": {
+		"si_unit": "rev/min",
+		"ip_unit": "rev/min",
+		"multiplier": 1,
+		"alternative": false
+	},
+	"W/(m3/s)": {
+		"si_unit": "W/(m3/s)",
+		"ip_unit": "W/(ft3/min)",
+		"multiplier": 0.0004719475,
+		"alternative": false
+	},
+	"W/m-K___Btu/h-ft-F": {
+		"si_unit": "W/m-K",
+		"ip_unit": "Btu/h-ft-F",
+		"multiplier": 0.577796066000163,
+		"alternative": true
+	},
+	"VA": {
+		"si_unit": "VA",
+		"ip_unit": "VA",
+		"multiplier": 1,
+		"alternative": false
+	},
+	"N-m": {
+		"si_unit": "N-m",
+		"ip_unit": "lbf-in",
+		"multiplier": 8.85074900525547,
+		"alternative": false
+	},
+	"m3/s-W": {
+		"si_unit": "m3/s-W",
+		"ip_unit": "(ft3/min)/(Btu/h)",
+		"multiplier": 621.099127332943,
+		"alternative": false,
+		"named_unit_kind": "VolumetricFlowPerPower"
+	},
+	"cm2": {
+		"si_unit": "cm2",
+		"ip_unit": "inch2",
+		"multiplier": 0.15500031000062,
+		"alternative": false
+	},
+	"kg/m": {
+		"si_unit": "kg/m",
+		"ip_unit": "lb/ft",
+		"multiplier": 0.67196893069637,
+		"alternative": false
+	},
+	"Pa___Pa": {
+		"si_unit": "Pa",
+		"ip_unit": "Pa",
+		"multiplier": 1,
+		"alternative": true
+	},
+	"m/yr": {
+		"si_unit": "m/yr",
+		"ip_unit": "inch/yr",
+		"multiplier": 39.3700787401575,
+		"alternative": false
+	},
+	"1/hr": {
+		"si_unit": "1/hr",
+		"ip_unit": "1/hr",
+		"multiplier": 1,
+		"alternative": false
+	},
+	"ppm": {
+		"si_unit": "ppm",
+		"ip_unit": "ppm",
+		"multiplier": 1,
+		"alternative": false
+	},
+	"W/m-K3": {
+		"si_unit": "W/m-K3",
+		"ip_unit": "Btu/h-F3-ft",
+		"multiplier": 0.178565727817582,
+		"alternative": false
+	},
+	"kg/m-s": {
+		"si_unit": "kg/m-s",
+		"ip_unit": "lb/ft-s",
+		"multiplier": 0.67196893069637,
+		"alternative": false
+	},
+	"kg/m-s-K": {
+		"si_unit": "kg/m-s-K",
+		"ip_unit": "lb/ft-s-F",
+		"multiplier": 0.373316072609094,
+		"alternative": false
+	},
+	"kg/m-s-K2": {
+		"si_unit": "kg/m-s-K2",
+		"ip_unit": "lb/ft-s-F2",
+		"multiplier": 0.207397818116164,
+		"alternative": false
+	},
+	"J/kg-K3": {
+		"si_unit": "J/kg-K3",
+		"ip_unit": "Btu/lb-F3",
+		"multiplier": 7.38277359526066E-05,
+		"alternative": false
+	},
+	"ms": {
+		"si_unit": "ms",
+		"ip_unit": "ms",
+		"multiplier": 1,
+		"alternative": false
+	},
+	"Ah": {
+		"si_unit": "Ah",
+		"ip_unit": "Ah",
+		"multiplier": 1,
+		"alternative": false
+	},
+	"deltaC/hr": {
+		"si_unit": "deltaC/hr",
+		"ip_unit": "deltaF/hr",
+		"multiplier": 1.8,
+		"alternative": false
+	},
+	"micron": {
+		"si_unit": "micron",
+		"ip_unit": "micron",
+		"multiplier": 1,
+		"alternative": false,
+		"named_unit_kind": "WaveLength"
+	},
+	"W/(m3/s)___W/(gal/min)": {
+		"si_unit": "W/(m3/s)",
+		"ip_unit": "W/(gal/min)",
+		"multiplier": 0.0000630902,
+		"alternative": true
+	},
+	"W/((m3/s)-Pa)": {
+		"si_unit": "W/((m3/s)-Pa)",
+		"ip_unit": "W/((gal/min)-ftH20)",
+		"multiplier": 0.188582274697355,
+		"alternative": false
+	},
+	"m3/s-m___gal/min-ft": {
+		"si_unit": "m3/s-m",
+		"ip_unit": "gal/min-ft",
+		"multiplier": 4831.17821785317,
+		"alternative": true
+	},
+	"m3/s-W___(gal/min)/(Btu/h)": {
+		"si_unit": "m3/s-W",
+		"ip_unit": "(gal/min)/(Btu/h)",
+		"multiplier": 4645.27137336702,
+		"alternative": true
+	},
+	"m3/person___gal/person": {
+		"si_unit": "m3/person",
+		"ip_unit": "gal/person",
+		"multiplier": 264.172037284185,
+		"alternative": true
+	},
+	"m3/hr-person___gal/hr-person": {
+		"si_unit": "m3/hr-person",
+		"ip_unit": "gal/hr-person",
+		"multiplier": 264.172037284185,
+		"alternative": true
+	},
+	"m3/m2___gal/ft2": {
+		"si_unit": "m3/m2",
+		"ip_unit": "gal/ft2",
+		"multiplier": 24.5423853466941,
+		"alternative": true
+	},
+	"m3/hr-m2___gal/hr-ft2": {
+		"si_unit": "m3/hr-m2",
+		"ip_unit": "gal/hr-ft2",
+		"multiplier": 24.5423853466941,
+		"alternative": true
+	},
+	"m3/hr___gal/hr": {
+		"si_unit": "m3/hr",
+		"ip_unit": "gal/hr",
+		"multiplier": 264.172037284185,
+		"alternative": true
+	},
+	"W/((m3/s)-Pa)___W/((ft3/min)-inH2O)": {
+		"si_unit": "W/((m3/s)-Pa)",
+		"ip_unit": "W/((ft3/min)-inH2O)",
+		"multiplier": 0.117556910599482,
+		"alternative": true
+	}
+}
