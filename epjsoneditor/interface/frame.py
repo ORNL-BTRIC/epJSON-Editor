@@ -165,106 +165,25 @@ class EpJsonEditorFrame(wx.Frame):
         print(selected_object_name)
         selected_object_dict = self.data_dictionary[selected_object_name]
         # construct list that contains field dictionary for each row of the grid
-        self.row_field = []
-        for item in selected_object_dict.input_fields:
-            current_field = selected_object_dict.input_fields[item]
-            current_field["field_name"] = item
-            self.row_field.append(current_field)
-        if selected_object_dict.extensible_size > 0: #add extensible fields if present
-            last_field_name = self.row_field[-1]["field_name"]
-            self.row_field.pop() # for extensible object don't need last item
-            repeat_extension_fields = self.maximum_repeats_of_extensible_fields(selected_object_name, last_field_name)
-            for repeat_field_group in range(repeat_extension_fields):
-                for item in selected_object_dict.input_fields[last_field_name]:
-                    if item != "field_name":
-                        current_field = selected_object_dict.input_fields[last_field_name][item]
-                        current_field["field_name"] = item
-                        current_field["field_name_no_spaces_with_counter"] = current_field["field_name_with_spaces"]  + "-" + str(repeat_field_group).zfill(3)
-                        self.row_field.append(current_field.copy())
-
-
-
-
-        name_to_field_map = {}
-        input_fields = selected_object_dict.input_fields
-        input_fields_keys = list(input_fields.keys())
-        extension_fields = {}
-        extension_field_keys = []
-        repeat_extension_fields = 0
-        last_input_field = input_fields_keys[-1]
-        if selected_object_dict.extensible_size > 0:
-            extension_fields = input_fields[last_input_field]
-            extension_field_keys = list(extension_fields.keys())
-            repeat_extension_fields = self.maximum_repeats_of_extensible_fields(selected_object_name, last_input_field)
-            input_fields_keys.pop()  # remove last item
-            new_rows = len(input_fields) + len(extension_fields) * repeat_extension_fields - 1
-        else:
-            new_rows = len(input_fields)
+        self.row_fields = self.create_row_by_row_field_list(selected_object_dict, selected_object_name)
+        new_columns = 1
         if selected_object_name in self.current_file:
             new_columns = len(self.current_file[selected_object_name]) + 1
-        else:
-            new_columns = 1
-        self.resize_grid_rows_columns(new_rows, new_columns)
-
+        self.resize_grid_rows_columns(len(self.row_fields), new_columns)
         # add field names and units
-        for counter, input_field in enumerate(input_fields_keys):
-            current_field = input_fields[input_field]
-            if "field_name_with_spaces" in current_field:
-                self.main_grid.SetRowLabelValue(counter, current_field["field_name_with_spaces"])
-                name_to_field_map[current_field["field_name_with_spaces"]] = input_field
-            else:
-                self.main_grid.SetRowLabelValue(counter, input_field)
-                name_to_field_map[input_field] = input_field
-            self.main_grid.SetCellValue(counter, 0, "")
-            if "units" in current_field:
-                if self.use_si_units:
-                    self.main_grid.SetCellValue(counter, 0, current_field["units"])
-                else:
-                    self.main_grid.SetCellValue(counter, 0, self.unit_conversions[current_field["units"]]["ip_unit"])
-            # self.main_grid.SetCellBackgroundColour(counter, 0, wx.LIGHT_GREY)
-        # add field names and units for the extension fields
-        field_count = len(input_fields) - 1
-        for repeat in range(1, repeat_extension_fields + 1):
-            for counter, extension_field in enumerate(extension_field_keys):
-                current_field = extension_fields[extension_field]
-                if "field_name_with_spaces" in current_field:
-                    field_name_with_index = current_field["field_name_with_spaces"] + "-" + str(repeat).zfill(3)
-                    self.main_grid.SetRowLabelValue(counter + field_count, field_name_with_index)
-                    name_to_field_map[field_name_with_index] = extension_field
-                else:
-                    field_name_with_index = current_field + "-" + str(repeat).zfill(3)
-                    self.main_grid.SetRowLabelValue(counter + field_count, field_name_with_index)
-                    name_to_field_map[field_name_with_index] = extension_field
-                self.main_grid.SetCellValue(counter + field_count, 0, "")
-                if "units" in current_field:
-                    if self.use_si_units:
-                        self.main_grid.SetCellValue(counter + field_count, 0, current_field["units"])
-                    else:
-                        self.main_grid.SetCellValue(counter + field_count, 0, self.unit_conversions[current_field["units"]]["ip_unit"])
-                # self.main_grid.SetCellBackgroundColour(counter + field_count, 0, wx.LIGHT_GREY)
-            field_count += len(extension_fields)
+        for row_counter, row_field in enumerate(self.row_fields):
+            self.main_grid.SetRowLabelValue(row_counter, row_field["display_field_name"])
+            self.main_grid.SetCellValue(row_counter, 0, self.display_unit(row_field))
         # populate the grid with the field values from the current file
         max_row = self.main_grid.GetNumberRows()
         max_col = self.main_grid.GetNumberCols()
         if selected_object_name in self.current_file:
             active_input_objects = self.current_file[selected_object_name]
-            for input_object_counter, active_input_object_name in enumerate(active_input_objects):
-                if input_object_counter < max_col:
-                    for field_counter, input_field in enumerate(input_fields_keys):
-                        if field_counter < max_row:
-                            if input_field == "name":
-                                self.main_grid.SetCellValue(field_counter, input_object_counter + 1, active_input_object_name)
-                            elif input_field in active_input_objects[active_input_object_name]:
-                                self.main_grid.SetCellValue(field_counter, input_object_counter + 1, str(active_input_objects[active_input_object_name][input_field]))
-                    # populate the grid with field values of extensible fields
-                    if selected_object_dict.extensible_size > 0:
-                        standard_field_count = len(input_fields_keys)
-                        active_extension_list = active_input_objects[active_input_object_name][last_input_field]
-                        for input_field_set_counter, input_field_set in enumerate(active_extension_list):
-                            for input_field_counter, input_field in enumerate(input_field_set):
-                                row_counter = standard_field_count + input_field_set_counter * selected_object_dict.extensible_size + input_field_counter
-                                if row_counter < max_row:
-                                    self.main_grid.SetCellValue(row_counter, input_object_counter + 1, str(input_field_set[input_field]))
+            for column_counter, active_input_object_name in enumerate(active_input_objects, start=1):
+                for row_counter, row_field in enumerate(self.row_fields):
+                    if column_counter < max_col and row_counter < max_row:
+                        self.main_grid.SetCellValue(row_counter, column_counter, self.display_cell_value(row_field,
+                                            active_input_object_name, active_input_objects))
         self.main_grid.AutoSizeColumns()
         self.main_grid.SetRowLabelSize(300)
         self.main_grid.SetRowLabelAlignment(wx.ALIGN_LEFT, wx.ALIGN_TOP)
@@ -274,6 +193,38 @@ class EpJsonEditorFrame(wx.Frame):
         self.main_grid.FreezeTo(0, 1)
         self.main_grid.SetCornerLabelValue("Field")
         self.main_grid.SetColLabelValue(0, "Units")
+
+    def create_row_by_row_field_list(self, object_dict, object_name):
+        row_fields = []
+        for item in object_dict.input_fields:
+            current_field = object_dict.input_fields[item]
+            current_field["field_name"] = item
+            if "field_name_with_spaces" in current_field:
+                current_field["display_field_name"] = current_field["field_name_with_spaces"]
+            row_fields.append(current_field)
+        if object_dict.extensible_size > 0: #add extensible fields if present
+            last_field_name = row_fields[-1]["field_name"]
+            repeat_extension_fields = self.maximum_repeats_of_extensible_fields(object_name, last_field_name)
+            row_fields.pop() # for extensible object don't need last item
+            for repeat_field_group in range(repeat_extension_fields):
+                for item in object_dict.input_fields[last_field_name]:
+                    if item != "field_name":
+                        current_field = object_dict.input_fields[last_field_name][item]
+                        current_field["field_name"] = item
+                        current_field["display_field_name"] = current_field["field_name_with_spaces"] + "-" + str(repeat_field_group + 1).zfill(3)
+                        current_field["extensible_root_field_name"] = last_field_name
+                        current_field["extensible_repeat_group"] = repeat_field_group
+                        row_fields.append(current_field.copy())
+        return row_fields
+
+    def display_unit(self, input_field):
+        unit_string = ""
+        if "units" in input_field:
+            if self.use_si_units:
+                unit_string =  input_field["units"]
+            else:
+                unit_string =  self.unit_conversions[input_field["units"]]["ip_unit"]
+        return unit_string
 
     def resize_grid_rows_columns(self, number_of_rows, number_of_columns):
         # resize the number of rows in the grid to correspond to longest object
@@ -290,6 +241,31 @@ class EpJsonEditorFrame(wx.Frame):
             self.main_grid.AppendCols(number_of_columns - current_columns)
         for counter in range(1, number_of_columns):
             self.main_grid.SetColLabelValue(counter, f"Obj{counter}")
+
+    def display_cell_value(self, row_field, active_input_object_name, active_input_objects):
+        cell_value = ""
+        if row_field["field_name"] == "name":
+            cell_value = active_input_object_name
+        elif row_field["field_name"] in active_input_objects[active_input_object_name]:
+            cell_value = active_input_objects[active_input_object_name][row_field["field_name"]]
+        elif "extensible_root_field_name" in row_field:
+            extensible_field_list = active_input_objects[active_input_object_name][row_field["extensible_root_field_name"]]
+            extensible_field = extensible_field_list[row_field["extensible_repeat_group"]]
+            cell_value = extensible_field[row_field["field_name"]]
+        cell_value_string = str(cell_value)
+        # see if unit conversion is necessary
+        if "type" in row_field:
+            if row_field["type"] == "number":
+                if "units" in row_field and not self.use_si_units:
+                    if "ip_unit" in row_field:
+                        unit_lookup = row_field["units"] + "___" + row_field["ip_unit"]
+                    else:
+                        unit_lookup = row_field["units"]
+                    converted_cell_value = cell_value * self.unit_conversions[unit_lookup]["multiplier"]
+                    if "offset" in self.unit_conversions[unit_lookup]:
+                        converted_cell_value = converted_cell_value + self.unit_conversions[unit_lookup]["offset"]
+                    cell_value_string = str(converted_cell_value)
+        return cell_value_string
 
     def handle_cell_left_click(self, event):
         print(f"left click ({event.GetRow()}, {event.GetCol()})")
