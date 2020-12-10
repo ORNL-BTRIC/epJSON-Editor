@@ -7,6 +7,7 @@ import json
 from epjsoneditor.schemainputobject import SchemaInputObject
 from epjsoneditor.interface.settings_dialog import SettingsDialog
 
+
 class EpJsonEditorFrame(wx.Frame):
 
     def __init__(self, parent, id=-1, title="epJSON Editor - ", pos=wx.DefaultPosition,
@@ -24,6 +25,7 @@ class EpJsonEditorFrame(wx.Frame):
         self.selected_object_name = None
         self.current_file_path = None
         self.use_si_units = True
+        self.row_fields = None
         self.unit_conversions = {}
         self.read_unit_conversions()
         self.current_file = {}
@@ -123,7 +125,7 @@ class EpJsonEditorFrame(wx.Frame):
         with wx.FileDialog(self, "Open EnergyPlus epJSON file", wildcard="epJSON files (*.epJSON)|*.epJSON",
                            style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fileDialog:
             if fileDialog.ShowModal() == wx.ID_CANCEL:
-                return     # the user changed their mind
+                return  # the user changed their mind
             path_name = fileDialog.GetPath()
             try:
                 self.load_current_file(path_name)
@@ -155,7 +157,8 @@ class EpJsonEditorFrame(wx.Frame):
 
     def select_object_list_item(self, event):
         self.selected_object_name = self.object_list_tree.GetItemText(event.GetItem())
-        explanation = self.selected_object_name + os.linesep + os.linesep + self.data_dictionary[self.selected_object_name].memo
+        explanation = self.selected_object_name + os.linesep + os.linesep + \
+            self.data_dictionary[self.selected_object_name].memo
         self.explanation_text.Value = explanation
         self.update_grid(self.selected_object_name)
         self.Refresh()
@@ -182,8 +185,10 @@ class EpJsonEditorFrame(wx.Frame):
             for column_counter, active_input_object_name in enumerate(active_input_objects, start=1):
                 for row_counter, row_field in enumerate(self.row_fields):
                     if column_counter < max_col and row_counter < max_row:
-                        self.main_grid.SetCellValue(row_counter, column_counter, self.display_cell_value(row_field,
-                                            active_input_object_name, active_input_objects))
+                        self.main_grid.SetCellValue(row_counter, column_counter,
+                                                    self.display_cell_value(row_field,
+                                                                            active_input_object_name,
+                                                                            active_input_objects))
         self.main_grid.AutoSizeColumns()
         self.main_grid.SetRowLabelSize(300)
         self.main_grid.SetRowLabelAlignment(wx.ALIGN_LEFT, wx.ALIGN_TOP)
@@ -202,16 +207,17 @@ class EpJsonEditorFrame(wx.Frame):
             if "field_name_with_spaces" in current_field:
                 current_field["display_field_name"] = current_field["field_name_with_spaces"]
             row_fields.append(current_field)
-        if object_dict.extensible_size > 0: #add extensible fields if present
+        if object_dict.extensible_size > 0:  # add extensible fields if present
             last_field_name = row_fields[-1]["field_name"]
             repeat_extension_fields = self.maximum_repeats_of_extensible_fields(object_name, last_field_name)
-            row_fields.pop() # for extensible object don't need last item
+            row_fields.pop()  # for extensible object don't need last item
             for repeat_field_group in range(repeat_extension_fields):
                 for item in object_dict.input_fields[last_field_name]:
                     if item != "field_name":
                         current_field = object_dict.input_fields[last_field_name][item]
                         current_field["field_name"] = item
-                        current_field["display_field_name"] = current_field["field_name_with_spaces"] + "-" + str(repeat_field_group + 1).zfill(3)
+                        current_field["display_field_name"] = current_field["field_name_with_spaces"] + "-" + str(
+                            repeat_field_group + 1).zfill(3)
                         current_field["extensible_root_field_name"] = last_field_name
                         current_field["extensible_repeat_group"] = repeat_field_group
                         row_fields.append(current_field.copy())
@@ -221,9 +227,9 @@ class EpJsonEditorFrame(wx.Frame):
         unit_string = ""
         if "units" in input_field:
             if self.use_si_units:
-                unit_string =  input_field["units"]
+                unit_string = input_field["units"]
             else:
-                unit_string =  self.unit_conversions[input_field["units"]]["ip_unit"]
+                unit_string = self.unit_conversions[input_field["units"]]["ip_unit"]
         return unit_string
 
     def resize_grid_rows_columns(self, number_of_rows, number_of_columns):
@@ -249,7 +255,8 @@ class EpJsonEditorFrame(wx.Frame):
         elif row_field["field_name"] in active_input_objects[active_input_object_name]:
             cell_value = active_input_objects[active_input_object_name][row_field["field_name"]]
         elif "extensible_root_field_name" in row_field:
-            extensible_field_list = active_input_objects[active_input_object_name][row_field["extensible_root_field_name"]]
+            extensible_field_list = active_input_objects[active_input_object_name][
+                row_field["extensible_root_field_name"]]
             extensible_field = extensible_field_list[row_field["extensible_repeat_group"]]
             cell_value = extensible_field[row_field["field_name"]]
         cell_value_string = str(cell_value)
