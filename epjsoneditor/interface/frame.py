@@ -58,6 +58,8 @@ class EpJsonEditorFrame(wx.Frame):
         self._mgr.AddPane(self.explanation_text, aui.AuiPaneInfo().Top().Caption("Explanation"))
 
         self.main_grid = self.create_grid()
+        self.Bind(wx.grid.EVT_GRID_CELL_LEFT_CLICK, self.handle_cell_left_click)
+
         self._mgr.AddPane(self.main_grid, aui.AuiPaneInfo().Name("grid_content").
                           CenterPane().Hide().MinimizeButton(True))
 
@@ -159,12 +161,30 @@ class EpJsonEditorFrame(wx.Frame):
         self.Refresh()
 
     def update_grid(self, selected_object_name):
-        self.main_grid.ClearGrid()
-        self.main_grid.FreezeTo(0, 1)
-        self.main_grid.SetCornerLabelValue("Field")
-        self.main_grid.SetColLabelValue(0, "Units")
+        self.set_grid_settings()
         print(selected_object_name)
         selected_object_dict = self.data_dictionary[selected_object_name]
+        # construct list that contains field dictionary for each row of the grid
+        self.row_field = []
+        for item in selected_object_dict.input_fields:
+            current_field = selected_object_dict.input_fields[item]
+            current_field["field_name"] = item
+            self.row_field.append(current_field)
+        if selected_object_dict.extensible_size > 0: #add extensible fields if present
+            last_field_name = self.row_field[-1]["field_name"]
+            self.row_field.pop() # for extensible object don't need last item
+            repeat_extension_fields = self.maximum_repeats_of_extensible_fields(selected_object_name, last_field_name)
+            for repeat_field_group in range(repeat_extension_fields):
+                for item in selected_object_dict.input_fields[last_field_name]:
+                    if item != "field_name":
+                        current_field = selected_object_dict.input_fields[last_field_name][item]
+                        current_field["field_name"] = item
+                        current_field["field_name_no_spaces_with_counter"] = current_field["field_name_with_spaces"]  + "-" + str(repeat_field_group).zfill(3)
+                        self.row_field.append(current_field.copy())
+
+
+
+
         name_to_field_map = {}
         input_fields = selected_object_dict.input_fields
         input_fields_keys = list(input_fields.keys())
@@ -180,24 +200,12 @@ class EpJsonEditorFrame(wx.Frame):
             new_rows = len(input_fields) + len(extension_fields) * repeat_extension_fields - 1
         else:
             new_rows = len(input_fields)
-        # resize the number of rows in the grid to correspond to longest object
-        current_rows = self.main_grid.GetNumberRows()
-        if new_rows < current_rows:
-            self.main_grid.DeleteRows(0, current_rows - new_rows, True)
-        if new_rows > current_rows:
-            self.main_grid.AppendRows(new_rows - current_rows)
-        # resize the number of columns to be the number of input objects
-        current_columns = self.main_grid.GetNumberCols()
         if selected_object_name in self.current_file:
             new_columns = len(self.current_file[selected_object_name]) + 1
         else:
             new_columns = 1
-        if new_columns < current_columns:
-            self.main_grid.DeleteCols(0, current_columns - new_columns, True)
-        if new_columns > current_columns:
-            self.main_grid.AppendCols(new_columns - current_columns)
-        for counter in range(1, new_columns):
-            self.main_grid.SetColLabelValue(counter, f"Obj{counter}")
+        self.resize_grid_rows_columns(new_rows, new_columns)
+
         # add field names and units
         for counter, input_field in enumerate(input_fields_keys):
             current_field = input_fields[input_field]
@@ -224,7 +232,7 @@ class EpJsonEditorFrame(wx.Frame):
                     self.main_grid.SetRowLabelValue(counter + field_count, field_name_with_index)
                     name_to_field_map[field_name_with_index] = extension_field
                 else:
-                    field_name_with_index = extension_fields + "-" + str(repeat).zfill(3)
+                    field_name_with_index = current_field + "-" + str(repeat).zfill(3)
                     self.main_grid.SetRowLabelValue(counter + field_count, field_name_with_index)
                     name_to_field_map[field_name_with_index] = extension_field
                 self.main_grid.SetCellValue(counter + field_count, 0, "")
@@ -261,6 +269,31 @@ class EpJsonEditorFrame(wx.Frame):
         self.main_grid.SetRowLabelSize(300)
         self.main_grid.SetRowLabelAlignment(wx.ALIGN_LEFT, wx.ALIGN_TOP)
 
+    def set_grid_settings(self):
+        self.main_grid.ClearGrid()
+        self.main_grid.FreezeTo(0, 1)
+        self.main_grid.SetCornerLabelValue("Field")
+        self.main_grid.SetColLabelValue(0, "Units")
+
+    def resize_grid_rows_columns(self, number_of_rows, number_of_columns):
+        # resize the number of rows in the grid to correspond to longest object
+        current_rows = self.main_grid.GetNumberRows()
+        if number_of_rows < current_rows:
+            self.main_grid.DeleteRows(0, current_rows - number_of_rows, True)
+        if number_of_rows > current_rows:
+            self.main_grid.AppendRows(number_of_rows - current_rows)
+        # resize the number of columns to be the number of input objects
+        current_columns = self.main_grid.GetNumberCols()
+        if number_of_columns < current_columns:
+            self.main_grid.DeleteCols(0, current_columns - number_of_columns, True)
+        if number_of_columns > current_columns:
+            self.main_grid.AppendCols(number_of_columns - current_columns)
+        for counter in range(1, number_of_columns):
+            self.main_grid.SetColLabelValue(counter, f"Obj{counter}")
+
+    def handle_cell_left_click(self, event):
+        print(f"left click ({event.GetRow()}, {event.GetCol()})")
+
     def maximum_repeats_of_extensible_fields(self, selected_object_name, field_name):
         max_repeat = 0
         if selected_object_name in self.current_file:
@@ -268,8 +301,6 @@ class EpJsonEditorFrame(wx.Frame):
             for active_input_object in active_input_objects.keys():
                 max_repeat = max(max_repeat, len(active_input_objects[active_input_object][field_name]))
         return max_repeat
-
-
 
     def create_data_dictionary(self):
         """
@@ -287,5 +318,3 @@ class EpJsonEditorFrame(wx.Frame):
         """
         with open("./support/unit_conversions.json") as unit_conversion_file:
             self.unit_conversions = json.load(unit_conversion_file)
-            for unit_conversion in self.unit_conversions:
-                print(unit_conversion)
