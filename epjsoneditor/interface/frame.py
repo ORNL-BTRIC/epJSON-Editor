@@ -157,11 +157,44 @@ class EpJsonEditorFrame(wx.Frame):
 
     def select_object_list_item(self, event):
         self.selected_object_name = self.object_list_tree.GetItemText(event.GetItem())
-        explanation = self.selected_object_name + os.linesep + os.linesep + \
-            self.data_dictionary[self.selected_object_name].memo
-        self.explanation_text.Value = explanation
+        self.display_explanation(self.selected_object_name)
         self.update_grid(self.selected_object_name)
         self.Refresh()
+
+    def display_explanation(self, object_name, row_number=-1):
+        explanation = f"Object Description: {object_name}" + os.linesep + os.linesep + \
+            self.data_dictionary[object_name].memo
+        if row_number != -1:
+            current_field = self.row_fields[row_number]
+            if 'display_field_name' in current_field:
+                explanation += os.linesep + os.linesep + f"Field Description: {current_field['display_field_name']}"
+            if 'note' in current_field:
+                explanation += os.linesep + os.linesep + current_field['note'] + os.linesep
+            if 'default' in current_field:
+                explanation += os.linesep + f"Default value: {str(current_field['default'])}"
+            if 'minimum' in current_field or 'maximum' in current_field:
+                range_string = "Range: "
+                if 'minimum' in current_field:
+                    range_string += str(current_field['minimum'])
+                    if 'exclusiveMinimum' in current_field:
+                        range_string += " < "
+                    else:
+                        range_string += " <= "
+                else:
+                    range_string += 'No minimum but'
+                range_string += " X "
+                if 'maximum' in current_field:
+                    if 'exclusiveMaximum' in current_field:
+                        range_string += " < "
+                    else:
+                        range_string += " <= "
+                    range_string += str(current_field['maximum'])
+                else:
+                    range_string += 'but no maximum.'
+                explanation += os.linesep + range_string
+            if 'is_required' in current_field:
+                explanation += os.linesep + "This field is required"
+        self.explanation_text.Value = explanation
 
     def update_grid(self, selected_object_name):
         self.set_grid_settings()
@@ -275,7 +308,12 @@ class EpJsonEditorFrame(wx.Frame):
         return cell_value_string
 
     def handle_cell_left_click(self, event):
-        print(f"left click ({event.GetRow()}, {event.GetCol()})")
+        cell_row = event.GetRow()
+        active_field = self.row_fields[cell_row]
+        object_name = self.main_grid.GetCellValue(0,event.GetCol())
+        print(f"left click ({cell_row}, {event.GetCol()}) for field {active_field['display_field_name']} for object {object_name}")
+        self.display_explanation(self.selected_object_name, row_number=cell_row)
+        event.Skip()
 
     def maximum_repeats_of_extensible_fields(self, selected_object_name, field_name):
         max_repeat = 0
