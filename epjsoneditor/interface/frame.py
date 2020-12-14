@@ -171,11 +171,13 @@ class EpJsonEditorFrame(wx.Frame):
             if 'note' in current_field:
                 explanation += os.linesep + os.linesep + current_field['note'] + os.linesep
             if 'default' in current_field:
-                explanation += os.linesep + f"Default value: {str(current_field['default'])}"
+                default_value = self.convert_unit_using_row_index(current_field['default'], row_number)
+                explanation += os.linesep + f"Default value: {str(default_value)}"
             if 'minimum' in current_field or 'maximum' in current_field:
                 range_string = "Range: "
                 if 'minimum' in current_field:
-                    range_string += str(current_field['minimum'])
+                    minimum_value = self.convert_unit_using_row_index(current_field['minimum'], row_number)
+                    range_string += str(minimum_value)
                     if 'exclusiveMinimum' in current_field:
                         range_string += " < "
                     else:
@@ -188,7 +190,8 @@ class EpJsonEditorFrame(wx.Frame):
                         range_string += " < "
                     else:
                         range_string += " <= "
-                    range_string += str(current_field['maximum'])
+                    maximum_value = self.convert_unit_using_row_index(current_field['maximum'], row_number)
+                    range_string += str(maximum_value)
                 else:
                     range_string += 'but no maximum.'
                 explanation += os.linesep + range_string
@@ -219,7 +222,7 @@ class EpJsonEditorFrame(wx.Frame):
                 for row_counter, row_field in enumerate(self.row_fields):
                     if column_counter < max_col and row_counter < max_row:
                         self.main_grid.SetCellValue(row_counter, column_counter,
-                                                    self.display_cell_value(row_field,
+                                                    self.display_cell_value(row_counter,
                                                                             active_input_object_name,
                                                                             active_input_objects))
         self.main_grid.AutoSizeColumns()
@@ -281,8 +284,9 @@ class EpJsonEditorFrame(wx.Frame):
         for counter in range(1, number_of_columns):
             self.main_grid.SetColLabelValue(counter, f"Obj{counter}")
 
-    def display_cell_value(self, row_field, active_input_object_name, active_input_objects):
+    def display_cell_value(self, row_index, active_input_object_name, active_input_objects):
         cell_value = ""
+        row_field = self.row_fields[row_index]
         if row_field["field_name"] == "name":
             cell_value = active_input_object_name
         elif row_field["field_name"] in active_input_objects[active_input_object_name]:
@@ -292,25 +296,35 @@ class EpJsonEditorFrame(wx.Frame):
                 row_field["extensible_root_field_name"]]
             extensible_field = extensible_field_list[row_field["extensible_repeat_group"]]
             cell_value = extensible_field[row_field["field_name"]]
-        cell_value_string = str(cell_value)
-        # see if unit conversion is necessary
-        if "type" in row_field:
-            if row_field["type"] == "number":
-                if "units" in row_field and not self.use_si_units:
-                    if "ip_unit" in row_field:
-                        unit_lookup = row_field["units"] + "___" + row_field["ip_unit"]
-                    else:
-                        unit_lookup = row_field["units"]
-                    converted_cell_value = cell_value * self.unit_conversions[unit_lookup]["multiplier"]
-                    if "offset" in self.unit_conversions[unit_lookup]:
-                        converted_cell_value = converted_cell_value + self.unit_conversions[unit_lookup]["offset"]
-                    cell_value_string = str(converted_cell_value)
+        cell_value_string = str(self.convert_unit_using_row_index(cell_value, row_index))
         return cell_value_string
+
+    def convert_unit_using_row_index(self, value_to_convert, row_index):
+        row_field = self.row_fields[row_index]
+        converted_value = value_to_convert # return value is input unless converted
+        if self.use_si_units:
+            return converted_value
+        if type(value_to_convert) is float or type(value_to_convert) is int:
+            if "type" in row_field:
+                if row_field["type"] == "number":
+                    if "units" in row_field and not self.use_si_units:
+                        if "ip_unit" in row_field:
+                            unit_lookup = row_field["units"] + "___" + row_field["ip_unit"]
+                        else:
+                            unit_lookup = row_field["units"]
+                        converted_value = self.convert_using_unit_string(value_to_convert, unit_lookup)
+        return converted_value
+
+    def convert_using_unit_string(self, value_to_convert, unit_string):
+        converted_value = value_to_convert * self.unit_conversions[unit_string]["multiplier"]
+        if "offset" in self.unit_conversions[unit_string]:
+            converted_cell_value = converted_value + self.unit_conversions[unit_string]["offset"]
+        return converted_value
 
     def handle_cell_left_click(self, event):
         cell_row = event.GetRow()
         active_field = self.row_fields[cell_row]
-        object_name = self.main_grid.GetCellValue(0,event.GetCol())
+        object_name = self.main_grid.GetCellValue(0, event.GetCol())
         print(f"left click ({cell_row}, {event.GetCol()}) for field {active_field['display_field_name']} for object {object_name}")
         self.display_explanation(self.selected_object_name, row_number=cell_row)
         event.Skip()
