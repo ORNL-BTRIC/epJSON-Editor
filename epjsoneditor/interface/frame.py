@@ -61,6 +61,7 @@ class EpJsonEditorFrame(wx.Frame):
 
         self.main_grid = self.create_grid()
         self.Bind(wx.grid.EVT_GRID_CELL_LEFT_CLICK, self.handle_cell_left_click)
+        self.Bind(wx.grid.EVT_GRID_CELL_CHANGED, self.handle_cell_changed)
 
         self._mgr.AddPane(self.main_grid, aui.AuiPaneInfo().Name("grid_content").
                           CenterPane().Hide().MinimizeButton(True))
@@ -225,7 +226,8 @@ class EpJsonEditorFrame(wx.Frame):
                                                     self.display_cell_value(row_counter,
                                                                             active_input_object_name,
                                                                             active_input_objects))
-        self.main_grid.AutoSizeColumns()
+        # self.main_grid.AutoSizeColumns()
+        self.resize_auto_plus_all_columns()
         self.main_grid.SetRowLabelSize(300)
         self.main_grid.SetRowLabelAlignment(wx.ALIGN_LEFT, wx.ALIGN_TOP)
 
@@ -234,6 +236,12 @@ class EpJsonEditorFrame(wx.Frame):
         self.main_grid.FreezeTo(0, 1)
         self.main_grid.SetCornerLabelValue("Field")
         self.main_grid.SetColLabelValue(0, "Units")
+
+    def resize_auto_plus_all_columns(self):
+        self.main_grid.AutoSizeColumns()
+        for col in range(1, self.main_grid.GetNumberCols()):
+            self.main_grid.SetColSize(col, self.main_grid.GetColSize(col) + 50)
+
 
     def create_row_by_row_field_list(self, object_dict, object_name):
         row_fields = []
@@ -323,11 +331,39 @@ class EpJsonEditorFrame(wx.Frame):
 
     def handle_cell_left_click(self, event):
         cell_row = event.GetRow()
+        cell_column = event.GetCol()
         active_field = self.row_fields[cell_row]
-        object_name = self.main_grid.GetCellValue(0, event.GetCol())
+        object_name = self.main_grid.GetCellValue(0, cell_column)
         print(f"left click ({cell_row}, {event.GetCol()}) for field {active_field['display_field_name']} for object {object_name}")
         self.display_explanation(self.selected_object_name, row_number=cell_row)
+        self.set_cell_choices(cell_row, cell_column)
         event.Skip()
+
+    def handle_cell_changed(self, event):
+        # remove the characters after the pipe character | that are shown in the dropdown list.
+        cell_row = event.GetRow()
+        cell_column = event.GetCol()
+        changed_string = self.main_grid.GetCellValue(cell_row, cell_column)
+        pipe_pos = changed_string.find('|')
+        if pipe_pos > 0:
+            self.main_grid.SetCellValue(cell_row, cell_column, changed_string[:pipe_pos])
+
+    def set_cell_choices(self, cell_row, cell_column):
+        row_field = self.row_fields[cell_row]
+        choices = []
+        choices.append(str(self.main_grid.GetCellValue(cell_row, cell_column)) + " | current")
+        if 'enum' in row_field:
+            for option in row_field['enum']:
+                choices.append(option + " | choice")
+        if 'default' in row_field:
+            choices.append(str(self.convert_unit_using_row_index(row_field['default'], cell_row)) + " | default")
+        if 'minimum' in row_field:
+            choices.append(str(self.convert_unit_using_row_index(row_field['minimum'], cell_row)) + " | minimum")
+        if 'maximum' in row_field:
+            choices.append(str(self.convert_unit_using_row_index(row_field['maximum'], cell_row)) + " | maximum")
+        self.main_grid.SetCellEditor(cell_row, cell_column,
+                    wx.grid.GridCellChoiceEditor(choices, allowOthers=True))
+
 
     def maximum_repeats_of_extensible_fields(self, selected_object_name, field_name):
         max_repeat = 0
