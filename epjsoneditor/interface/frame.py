@@ -26,6 +26,7 @@ class EpJsonEditorFrame(wx.Frame):
         self.current_file_path = None
         self.use_si_units = True
         self.row_fields = None
+        self.column_input_object_names = None
         self.unit_conversions = {}
         self.read_unit_conversions()
         self.current_file = {}
@@ -219,7 +220,9 @@ class EpJsonEditorFrame(wx.Frame):
         max_col = self.main_grid.GetNumberCols()
         if selected_object_name in self.current_file:
             active_input_objects = self.current_file[selected_object_name]
+            self.column_input_object_names = ['skip column zero',] # we never need the first element
             for column_counter, active_input_object_name in enumerate(active_input_objects, start=1):
+                self.column_input_object_names.append(active_input_object_name)
                 for row_counter, row_field in enumerate(self.row_fields):
                     if column_counter < max_col and row_counter < max_row:
                         self.main_grid.SetCellValue(row_counter, column_counter,
@@ -343,10 +346,38 @@ class EpJsonEditorFrame(wx.Frame):
         # remove the characters after the pipe character | that are shown in the dropdown list.
         cell_row = event.GetRow()
         cell_column = event.GetCol()
-        changed_string = self.main_grid.GetCellValue(cell_row, cell_column)
-        pipe_pos = changed_string.find('|')
+        original_string = event.GetString()
+        changed_string = self.remove_pipe_and_after(self.main_grid.GetCellValue(cell_row, cell_column))
+        print(f" original_string: '{original_string}'  changed_string: '{changed_string}'  and if they are equal: {original_string == changed_string}" )
+        if original_string != changed_string:
+            self.set_file_value(cell_row, cell_column, changed_string)
+        self.main_grid.SetCellValue(cell_row, cell_column, changed_string)
+
+    def set_file_value(self, cell_row, cell_column, new_cell_value):
+        active_input_objects = self.current_file[self.selected_object_name]
+        current_input_object_name = self.column_input_object_names[cell_column]
+        active_input_object = active_input_objects[current_input_object_name]
+        row_field = self.row_fields[cell_row]
+        # set the value in the json data structure
+        if row_field['field_name'] == 'name':
+            active_input_objects[new_cell_value] = active_input_objects.pop(current_input_object_name)
+            self.column_input_object_names[cell_column] = new_cell_value
+        elif "extensible_root_field_name" in row_field:
+            extensible_field_list = active_input_objects[current_input_object_name][
+                row_field["extensible_root_field_name"]]
+            extensible_field = extensible_field_list[row_field["extensible_repeat_group"]]
+            extensible_field[row_field["field_name"]] = new_cell_value
+        else:
+            active_input_object[row_field['field_name']] = new_cell_value
+
+    def remove_pipe_and_after(self, string_with_pipe):
+        pipe_pos = string_with_pipe.find('|')
+        return_string = string_with_pipe
         if pipe_pos > 0:
-            self.main_grid.SetCellValue(cell_row, cell_column, changed_string[:pipe_pos])
+            # remove from one character before the pipe since also added a space
+            return_string = string_with_pipe[:(pipe_pos - 1)]
+        return return_string
+
 
     def set_cell_choices(self, cell_row, cell_column):
         row_field = self.row_fields[cell_row]
