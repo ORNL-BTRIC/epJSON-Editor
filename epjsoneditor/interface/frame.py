@@ -96,11 +96,16 @@ class EpJsonEditorFrame(wx.Frame):
                              agwStyle=aui.AUI_TB_TEXT)
         tb1.SetToolBitmapSize(wx.Size(48, 48))
         tb1.AddSimpleTool(10, "New", wx.ArtProvider.GetBitmap(wx.ART_NEW))
+
         tb_open_file = tb1.AddSimpleTool(11, "Open", wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN))
         self.Bind(wx.EVT_TOOL, self.handle_open_file, tb_open_file)
 
-        tb1.AddSimpleTool(12, "Save", wx.ArtProvider.GetBitmap(wx.ART_FILE_SAVE))
-        tb1.AddSimpleTool(13, "Save As", wx.ArtProvider.GetBitmap(wx.ART_FILE_SAVE_AS))
+        tb_save_file = tb1.AddSimpleTool(12, "Save", wx.ArtProvider.GetBitmap(wx.ART_FILE_SAVE))
+        self.Bind(wx.EVT_TOOL, self.handle_save_file, tb_save_file)
+
+        tb_save_as_file = tb1.AddSimpleTool(13, "Save As", wx.ArtProvider.GetBitmap(wx.ART_FILE_SAVE_AS))
+        self.Bind(wx.EVT_TOOL, self.handle_save_as_file, tb_save_as_file)
+
         tb1.AddSeparator()
         tb1.AddSimpleTool(14, "Undo", wx.ArtProvider.GetBitmap(wx.ART_UNDO))
         tb1.AddSimpleTool(15, "Redo", wx.ArtProvider.GetBitmap(wx.ART_REDO))
@@ -151,6 +156,34 @@ class EpJsonEditorFrame(wx.Frame):
             with open(path_name) as input_file:
                 self.current_file = json.load(input_file)
             self.Refresh()
+
+    def handle_save_file(self, event):
+        try:
+            self.save_current_file(self.current_file_path)
+        except IOError:
+            wx.LogError(f"Cannot save current data in file {self.current_file_path}")
+
+    def handle_save_as_file(self, event):
+        default_file_path = ""
+        if self.current_file_path is not None:
+            default_file_path = self.current_file_path
+        with wx.FileDialog(self, "Save EnergyPlus epJSON file", wildcard="epJSON files (*.epJSON)|*.epJSON",
+                           style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT,
+                           defaultFile=default_file_path) as fileDialog:
+            if fileDialog.ShowModal() == wx.ID_CANCEL:
+                return  # the user changed their mind
+            pathname = fileDialog.GetPath()
+            try:
+                self.save_current_file(pathname)
+            except IOError:
+                wx.LogError(f"Cannot save current data in file {pathname}")
+
+    def save_current_file(self, path_name):
+        self.current_file_path = path_name
+        self.SetTitle(f"epJSON Editor - {path_name}")
+        with open(path_name, 'w') as output_file:
+            json.dump(self.current_file, output_file, indent=4)
+        self.Refresh()
 
     def handle_close(self, event):
         # deinitialize the frame manager
