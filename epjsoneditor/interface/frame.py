@@ -258,10 +258,12 @@ class EpJsonEditorFrame(wx.Frame):
                 self.column_input_object_names.append(active_input_object_name)
                 for row_counter, row_field in enumerate(self.row_fields):
                     if column_counter < max_col and row_counter < max_row:
-                        self.main_grid.SetCellValue(row_counter, column_counter,
-                                                    self.display_cell_value(row_counter,
-                                                                            active_input_object_name,
-                                                                            active_input_objects))
+                        display_value, unconverted_value = self.display_cell_value(row_counter,
+                                                                                   active_input_object_name,
+                                                                                   active_input_objects)
+                        self.main_grid.SetCellValue(row_counter, column_counter, display_value)
+                        if not self.is_value_valid(row_counter, unconverted_value):
+                            self.main_grid.SetCellBackgroundColour(row_counter, column_counter, "tan")
         # self.main_grid.AutoSizeColumns()
         self.resize_auto_plus_all_columns()
         self.main_grid.SetRowLabelSize(300)
@@ -340,7 +342,30 @@ class EpJsonEditorFrame(wx.Frame):
             extensible_field = extensible_field_list[row_field["extensible_repeat_group"]]
             cell_value = extensible_field[row_field["field_name"]]
         cell_value_string = str(self.convert_unit_using_row_index(cell_value, row_index))
-        return cell_value_string
+        return cell_value_string, cell_value
+
+    def is_value_valid(self, row_index, value):
+        row_field = self.row_fields[row_index]
+        if row_field['type'] == 'number':
+            numeric_value = float(value)
+            if 'minimum' in row_field:
+                if 'exclusiveMinimum' in row_field:
+                    if numeric_value <= row_field['minimum']:
+                        return False
+                else:
+                    if numeric_value < row_field['minimum']:
+                        return False
+            if 'maximum' in row_field:
+                if 'exclusiveMaximum' in row_field:
+                    if numeric_value >= row_field['maximum']:
+                        return False
+                else:
+                    if numeric_value > row_field['maximum']:
+                        return False
+        elif 'enum' in row_field:
+            if value not in row_field['enum']:
+                return False
+        return True
 
     def convert_unit_using_row_index(self, value_to_convert, row_index):
         row_field = self.row_fields[row_index]
@@ -386,6 +411,10 @@ class EpJsonEditorFrame(wx.Frame):
         if original_string != changed_string:
             self.set_file_value(cell_row, cell_column, changed_string)
         self.main_grid.SetCellValue(cell_row, cell_column, changed_string)
+        if self.is_value_valid(cell_row, changed_string):
+            self.main_grid.SetCellBackgroundColour(cell_row, cell_column, "white")
+        else:
+            self.main_grid.SetCellBackgroundColour(cell_row, cell_column, "tan")
 
     def set_file_value(self, cell_row, cell_column, new_cell_value):
         active_input_objects = self.current_file[self.selected_object_name]
