@@ -128,7 +128,7 @@ class EpJsonEditorFrame(wx.Frame):
                           ToolbarPane().Top())
         self._mgr.Update()
 
-    def handle_open_file(self, event):
+    def handle_open_file(self, _):
         with wx.FileDialog(self, "Open EnergyPlus epJSON file", wildcard="epJSON files (*.epJSON)|*.epJSON",
                            style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fileDialog:
             if fileDialog.ShowModal() == wx.ID_CANCEL:
@@ -139,7 +139,7 @@ class EpJsonEditorFrame(wx.Frame):
             except IOError:
                 wx.LogError(f"Cannot open file {path_name}")
 
-    def handle_settings_toolbar_button(self, event):
+    def handle_settings_toolbar_button(self, _):
         settings_dialog = SettingsDialog(None, title='Settings')
         settings_dialog.set_settings(self.use_si_units)
         return_value = settings_dialog.ShowModal()
@@ -157,13 +157,13 @@ class EpJsonEditorFrame(wx.Frame):
                 self.current_file = json.load(input_file)
             self.Refresh()
 
-    def handle_save_file(self, event):
+    def handle_save_file(self, _):
         try:
             self.save_current_file(self.current_file_path)
         except IOError:
             wx.LogError(f"Cannot save current data in file {self.current_file_path}")
 
-    def handle_save_as_file(self, event):
+    def handle_save_as_file(self, _):
         default_file_path = ""
         if self.current_file_path is not None:
             default_file_path = self.current_file_path
@@ -186,7 +186,7 @@ class EpJsonEditorFrame(wx.Frame):
         self.Refresh()
 
     def handle_close(self, event):
-        # deinitialize the frame manager
+        # de-initialize the frame manager
         self._mgr.UnInit()
         event.Skip()
 
@@ -198,7 +198,7 @@ class EpJsonEditorFrame(wx.Frame):
 
     def display_explanation(self, object_name, row_number=-1):
         explanation = f"Object Description: {object_name}" + os.linesep + os.linesep + \
-            self.data_dictionary[object_name].memo
+                      self.data_dictionary[object_name].memo
         if row_number != -1:
             current_field = self.row_fields[row_number]
             if 'display_field_name' in current_field:
@@ -253,7 +253,7 @@ class EpJsonEditorFrame(wx.Frame):
         max_col = self.main_grid.GetNumberCols()
         if selected_object_name in self.current_file:
             active_input_objects = self.current_file[selected_object_name]
-            self.column_input_object_names = ['skip column zero',] # we never need the first element
+            self.column_input_object_names = ['skip column zero', ]  # we never need the first element
             for column_counter, active_input_object_name in enumerate(active_input_objects, start=1):
                 self.column_input_object_names.append(active_input_object_name)
                 for row_counter, row_field in enumerate(self.row_fields):
@@ -277,7 +277,6 @@ class EpJsonEditorFrame(wx.Frame):
         self.main_grid.AutoSizeColumns()
         for col in range(1, self.main_grid.GetNumberCols()):
             self.main_grid.SetColSize(col, self.main_grid.GetColSize(col) + 50)
-
 
     def create_row_by_row_field_list(self, object_dict, object_name):
         row_fields = []
@@ -345,7 +344,7 @@ class EpJsonEditorFrame(wx.Frame):
 
     def convert_unit_using_row_index(self, value_to_convert, row_index):
         row_field = self.row_fields[row_index]
-        converted_value = value_to_convert # return value is input unless converted
+        converted_value = value_to_convert  # return value is input unless converted
         if self.use_si_units:
             return converted_value
         if type(value_to_convert) is float or type(value_to_convert) is int:
@@ -362,7 +361,7 @@ class EpJsonEditorFrame(wx.Frame):
     def convert_using_unit_string(self, value_to_convert, unit_string):
         converted_value = value_to_convert * self.unit_conversions[unit_string]["multiplier"]
         if "offset" in self.unit_conversions[unit_string]:
-            converted_cell_value = converted_value + self.unit_conversions[unit_string]["offset"]
+            converted_value = converted_value + self.unit_conversions[unit_string]["offset"]
         return converted_value
 
     def handle_cell_left_click(self, event):
@@ -370,7 +369,8 @@ class EpJsonEditorFrame(wx.Frame):
         cell_column = event.GetCol()
         active_field = self.row_fields[cell_row]
         object_name = self.main_grid.GetCellValue(0, cell_column)
-        print(f"left click ({cell_row}, {event.GetCol()}) for field {active_field['display_field_name']} for object {object_name}")
+        print(f"left click ({cell_row}, {event.GetCol()}) for field {active_field['display_field_name']} "
+              f"for object {object_name}")
         self.display_explanation(self.selected_object_name, row_number=cell_row)
         self.set_cell_choices(cell_row, cell_column)
         event.Skip()
@@ -381,7 +381,8 @@ class EpJsonEditorFrame(wx.Frame):
         cell_column = event.GetCol()
         original_string = event.GetString()
         changed_string = self.remove_pipe_and_after(self.main_grid.GetCellValue(cell_row, cell_column))
-        print(f" original_string: '{original_string}'  changed_string: '{changed_string}'  and if they are equal: {original_string == changed_string}" )
+        print(f" original_string: '{original_string}'  changed_string: '{changed_string}'  and if they are equal: "
+              f"{original_string == changed_string}")
         if original_string != changed_string:
             self.set_file_value(cell_row, cell_column, changed_string)
         self.main_grid.SetCellValue(cell_row, cell_column, changed_string)
@@ -403,7 +404,8 @@ class EpJsonEditorFrame(wx.Frame):
         else:
             active_input_object[row_field['field_name']] = new_cell_value
 
-    def remove_pipe_and_after(self, string_with_pipe):
+    @staticmethod
+    def remove_pipe_and_after(string_with_pipe):
         pipe_pos = string_with_pipe.find('|')
         return_string = string_with_pipe
         if pipe_pos > 0:
@@ -411,11 +413,9 @@ class EpJsonEditorFrame(wx.Frame):
             return_string = string_with_pipe[:(pipe_pos - 1)]
         return return_string
 
-
     def set_cell_choices(self, cell_row, cell_column):
         row_field = self.row_fields[cell_row]
-        choices = []
-        choices.append(str(self.main_grid.GetCellValue(cell_row, cell_column)) + " | current")
+        choices = [str(self.main_grid.GetCellValue(cell_row, cell_column)) + " | current"]
         if 'enum' in row_field:
             for option in row_field['enum']:
                 choices.append(option + " | choice")
@@ -426,8 +426,7 @@ class EpJsonEditorFrame(wx.Frame):
         if 'maximum' in row_field:
             choices.append(str(self.convert_unit_using_row_index(row_field['maximum'], cell_row)) + " | maximum")
         self.main_grid.SetCellEditor(cell_row, cell_column,
-                    wx.grid.GridCellChoiceEditor(choices, allowOthers=True))
-
+                                     wx.grid.GridCellChoiceEditor(choices, allowOthers=True))
 
     def maximum_repeats_of_extensible_fields(self, selected_object_name, field_name):
         max_repeat = 0
