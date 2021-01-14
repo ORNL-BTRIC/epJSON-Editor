@@ -5,6 +5,7 @@ import os
 import json
 
 from epjsoneditor.schemainputobject import SchemaInputObject
+from epjsoneditor.referencesfromdatadictionary import ReferencesFromDataDictionary
 from epjsoneditor.interface.settings_dialog import SettingsDialog
 
 
@@ -17,6 +18,8 @@ class EpJsonEditorFrame(wx.Frame):
         self._mgr = aui.AuiManager()
 
         self.data_dictionary = {}
+        self.cross_references = {}
+        self.reference_names = {}
         self.create_data_dictionary()
         self.explanation_text = None
         self.object_list_tree = None
@@ -155,6 +158,7 @@ class EpJsonEditorFrame(wx.Frame):
             self.SetTitle(f"epJSON Editor - {path_name}")
             with open(path_name) as input_file:
                 self.current_file = json.load(input_file)
+                self.gather_active_references()
             self.Refresh()
 
     def handle_save_file(self, _):
@@ -448,6 +452,11 @@ class EpJsonEditorFrame(wx.Frame):
         if 'enum' in row_field:
             for option in row_field['enum']:
                 choices.append(option + " | choice")
+        if 'object_list' in row_field:
+            for reference_list_name in row_field['object_list']:
+                if reference_list_name in self.reference_names:
+                    for referenced_name in self.reference_names[reference_list_name]:
+                        choices.append(referenced_name + " | object")
         if 'default' in row_field:
             choices.append(str(self.convert_unit_using_row_index(row_field['default'], cell_row)) + " | default")
         if 'minimum' in row_field:
@@ -474,6 +483,8 @@ class EpJsonEditorFrame(wx.Frame):
             epschema = json.load(schema_file)
             for object_name, json_properties in epschema["properties"].items():
                 self.data_dictionary[object_name] = SchemaInputObject(json_properties)
+            references_from_data_dictionary = ReferencesFromDataDictionary(self.data_dictionary)
+            self.cross_references = references_from_data_dictionary.reference_fields
 
     def read_unit_conversions(self):
         """
@@ -481,3 +492,23 @@ class EpJsonEditorFrame(wx.Frame):
         """
         with open("./support/unit_conversions.json") as unit_conversion_file:
             self.unit_conversions = json.load(unit_conversion_file)
+
+    def gather_active_references(self):
+        for reference_list_name in self.cross_references.keys():
+            current_reference_list = self.get_active_reference_list(reference_list_name)
+            if current_reference_list:
+                self.reference_names[reference_list_name] = current_reference_list
+
+    def get_active_reference_list(self, reference_list_name):
+        list_object_field = self.cross_references[reference_list_name]
+        current_reference_list = []
+        for object_field in list_object_field:
+            (object_name, field_name) = object_field
+            if object_name in self.current_file:
+                active_objects = self.current_file[object_name]
+                if field_name == 'name':
+                    current_reference_list.extend(list(active_objects.keys()))
+                else:
+                    print(f"Objects that use fields other than 'name' for reference lists {active_objects} "
+                          f"and the field is {field_name}")
+        return current_reference_list
