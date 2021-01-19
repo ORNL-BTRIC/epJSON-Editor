@@ -12,7 +12,7 @@ from epjsoneditor.interface.settings_dialog import SettingsDialog
 class EpJsonEditorFrame(wx.Frame):
 
     def __init__(self, parent, id=-1, title="epJSON Editor - ", pos=wx.DefaultPosition,
-                 size=(1500, 1000), style=wx.DEFAULT_FRAME_STYLE):
+                 size=(1800, 1000), style=wx.DEFAULT_FRAME_STYLE):
         wx.Frame.__init__(self, parent, id, title, pos, size, style)
 
         self._mgr = aui.AuiManager()
@@ -74,15 +74,34 @@ class EpJsonEditorFrame(wx.Frame):
         tools_search = aui.AuiToolBar(search_panel, -1, wx.DefaultPosition, wx.DefaultSize) # agwStyle=aui.AUI_TB_TEXT
         tools_search.SetToolBitmapSize(wx.Size(24, 24))
 
-        #tools_search.AddLabel("Search for")
-        search_field = wx.ComboBox(tools_search,value='building', choices=['zone','building','lighting'])
+        tools_search.AddLabel(-1, "Search for:", 60)
+        search_field = wx.ComboBox(tools_search,value='', choices=['zone','building','lighting'], size=(200,20))
         tools_search.AddControl(search_field)
 
-        search_bar_find = tools_search.AddSimpleTool(-1, "Find", wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN))
-        search_bar_match_case = tools_search.AddToggleTool(-1, wx.ArtProvider.GetBitmap(wx.ART_FILE_SAVE), wx.NullBitmap)
-        search_bar_match_entire_field = tools_search.AddToggleTool(-1, wx.ArtProvider.GetBitmap(wx.ART_FILE_SAVE), wx.NullBitmap)
-        search_bar_match_nodes = tools_search.AddToggleTool(-1, wx.ArtProvider.GetBitmap(wx.ART_FILE_SAVE), wx.NullBitmap)
-        tb_save_as_file = tools_search.AddSimpleTool(-1, "Save As", wx.ArtProvider.GetBitmap(wx.ART_FILE_SAVE_AS))
+        search_bar_find = tools_search.AddSimpleTool(-2, "Find", wx.ArtProvider.GetBitmap(wx.ART_FIND))
+        tools_search.AddSpacer(30)
+        tools_search.AddLabel(-3, "Match:", 35)
+        match_case = wx.CheckBox(tools_search, wx.ID_ANY, "Case")
+        tools_search.AddControl(match_case)
+        match_entire_field = wx.CheckBox(tools_search, wx.ID_ANY, "Entire Field")
+        tools_search.AddControl(match_entire_field)
+        match_node_names_only = wx.CheckBox(tools_search, wx.ID_ANY, "Node Names Only")
+        tools_search.AddControl(match_node_names_only)
+        tools_search.AddSpacer(30)
+#        search_previous = tools_search.AddSimpleTool(-7, "Find", wx.ArtProvider.GetBitmap(wx.ART_GO_BACK))
+#       search_next = tools_search.AddSimpleTool(-8, "Find", wx.ArtProvider.GetBitmap(wx.ART_GO_FORWARD))
+        tools_search.AddSpacer(30)
+        jump_button = wx.Button(tools_search, id = wx.ID_ANY, label="Jump")
+        tools_search.AddControl(jump_button)
+        tools_search.AddSpacer(30)
+        tools_search.AddLabel(-1, "Replace With:", 70)
+        replace_field = wx.ComboBox(tools_search,value='', choices=['zone','building','lighting'], size=(200,20))
+        tools_search.AddControl(replace_field)
+        replace_single_button = wx.Button(tools_search, id = wx.ID_ANY, label="Single")
+        tools_search.AddControl(replace_single_button)
+        replace_all_button = wx.Button(tools_search, id = wx.ID_ANY, label="All")
+        tools_search.AddControl(replace_all_button)
+
         tools_search.Realize()
         search_sizer.Add(tools_search, 0, flag=wx.TOP)
 
