@@ -51,9 +51,6 @@ class EpJsonEditorFrame(wx.Frame):
                                             wx.DefaultPosition, wx.Size(200, 150),
                                             wx.NO_BORDER | wx.TE_MULTILINE)
 
-        text3 = wx.TextCtrl(self, -1, "Pane 3 - sample text",
-                            wx.DefaultPosition, wx.Size(200, 150),
-                            wx.NO_BORDER | wx.TE_MULTILINE)
 
         text4 = wx.TextCtrl(self, -1, "Main content window",
                             wx.DefaultPosition, wx.Size(600, 650),
@@ -70,7 +67,50 @@ class EpJsonEditorFrame(wx.Frame):
         self._mgr.AddPane(self.main_grid, aui.AuiPaneInfo().Name("grid_content").
                           CenterPane().Hide().MinimizeButton(True))
 
-        self._mgr.AddPane(text3, aui.AuiPaneInfo().Bottom().Caption("Search"))
+        pnl = wx.Panel(self)
+        pbox = wx.BoxSizer(wx.VERTICAL)
+
+        tb_search = aui.AuiToolBar(pnl, -1, wx.DefaultPosition, wx.DefaultSize) # agwStyle=aui.AUI_TB_TEXT
+        tb_search.SetToolBitmapSize(wx.Size(12, 12))
+        tb_search.AddSimpleTool(10, "New", wx.ArtProvider.GetBitmap(wx.ART_NEW))
+
+        tb_open_file = tb_search.AddSimpleTool(11, "Open", wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN))
+        tb_save_file = tb_search.AddSimpleTool(12, "Save", wx.ArtProvider.GetBitmap(wx.ART_FILE_SAVE))
+        tb_save_as_file = tb_search.AddSimpleTool(13, "Save As", wx.ArtProvider.GetBitmap(wx.ART_FILE_SAVE_AS))
+        tb_search.Realize()
+        pbox.Add(tb_search, 0, flag=wx.TOP)
+
+        notebook = aui.AuiNotebook(pnl)
+        jump_panel = wx.Panel(notebook)
+        text7 = wx.TextCtrl(jump_panel, -1, "jump panel in notebook1",
+                            wx.DefaultPosition, wx.Size(100, 150),
+                            wx.NO_BORDER | wx.TE_MULTILINE)
+        notebook.AddPage(text7, "Jump1")
+        text8 = wx.TextCtrl(jump_panel, -1, "jump panel in notebook2",
+                            wx.DefaultPosition, wx.Size(100, 150),
+                            wx.NO_BORDER | wx.TE_MULTILINE)
+        notebook.AddPage(text8, "Jump2")
+        jump_results = wx.ListCtrl(jump_panel, -1, style=wx.LC_REPORT)
+        jump_results.InsertColumn(0,'result', width=100)
+        jump_results.InsertColumn(1,'object', width=80)
+        jump_results.Append(("first", "base"))
+        jump_results.Append(("second", "base"))
+        jump_results.Append(("third", "base"))
+        jump_results.Append(("home", "plate"))
+        notebook.AddPage(jump_results, "Jump3")
+        pbox.Add(notebook, 1, flag=wx.EXPAND)
+
+
+        #button1 = wx.Button(pnl, -1, "click me")
+        #pbox.Add(button1, 1, flag=wx.ALL)
+
+        #text5 = wx.TextCtrl(pnl, -1, "Bottom Text in Panel",
+        #                    wx.DefaultPosition, wx.Size(200, 150),
+        #                    wx.NO_BORDER | wx.TE_MULTILINE)
+        #pbox.Add(text5, 1, flag=wx.EXPAND)
+        pnl.SetSizer(pbox)
+        self._mgr.AddPane(pnl, aui.AuiPaneInfo().Bottom().Name("bottom_search").Caption("Jump and Search"))
+
         # Layer(2) allows it to take all of left side
         self._mgr.AddPane(self.object_list_tree, aui.AuiPaneInfo().Left().Layer(2).Caption("List of Input Objects"))
 
@@ -512,3 +552,7 @@ class EpJsonEditorFrame(wx.Frame):
                     print(f"Objects that use fields other than 'name' for reference lists {active_objects} "
                           f"and the field is {field_name}")
         return current_reference_list
+
+
+# class JumpAndSearchPanel(wx.Panel):
+#
