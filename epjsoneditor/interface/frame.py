@@ -12,7 +12,7 @@ from epjsoneditor.interface.settings_dialog import SettingsDialog
 class EpJsonEditorFrame(wx.Frame):
 
     def __init__(self, parent, id=-1, title="epJSON Editor - ", pos=wx.DefaultPosition,
-                 size=(1200, 800), style=wx.DEFAULT_FRAME_STYLE):
+                 size=(1500, 1000), style=wx.DEFAULT_FRAME_STYLE):
         wx.Frame.__init__(self, parent, id, title, pos, size, style)
 
         self._mgr = aui.AuiManager()
@@ -67,52 +67,56 @@ class EpJsonEditorFrame(wx.Frame):
         self._mgr.AddPane(self.main_grid, aui.AuiPaneInfo().Name("grid_content").
                           CenterPane().Hide().MinimizeButton(True))
 
-        pnl = wx.Panel(self)
-        pbox = wx.BoxSizer(wx.VERTICAL)
+        # set up the pane that contains the Jump and Search tabs and toolbar
+        search_panel = wx.Panel(self)
+        search_sizer = wx.BoxSizer(wx.VERTICAL)
 
-        tb_search = aui.AuiToolBar(pnl, -1, wx.DefaultPosition, wx.DefaultSize) # agwStyle=aui.AUI_TB_TEXT
-        tb_search.SetToolBitmapSize(wx.Size(12, 12))
-        tb_search.AddSimpleTool(10, "New", wx.ArtProvider.GetBitmap(wx.ART_NEW))
+        tools_search = aui.AuiToolBar(search_panel, -1, wx.DefaultPosition, wx.DefaultSize) # agwStyle=aui.AUI_TB_TEXT
+        tools_search.SetToolBitmapSize(wx.Size(24, 24))
 
-        tb_open_file = tb_search.AddSimpleTool(11, "Open", wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN))
-        tb_save_file = tb_search.AddSimpleTool(12, "Save", wx.ArtProvider.GetBitmap(wx.ART_FILE_SAVE))
-        tb_save_as_file = tb_search.AddSimpleTool(13, "Save As", wx.ArtProvider.GetBitmap(wx.ART_FILE_SAVE_AS))
-        tb_search.Realize()
-        pbox.Add(tb_search, 0, flag=wx.TOP)
+        #tools_search.AddLabel("Search for")
+        search_field = wx.ComboBox(tools_search,value='building', choices=['zone','building','lighting'])
+        tools_search.AddControl(search_field)
 
-        notebook = aui.AuiNotebook(pnl)
-        jump_panel = wx.Panel(notebook)
-        text7 = wx.TextCtrl(jump_panel, -1, "jump panel in notebook1",
-                            wx.DefaultPosition, wx.Size(100, 150),
-                            wx.NO_BORDER | wx.TE_MULTILINE)
-        notebook.AddPage(text7, "Jump1")
-        text8 = wx.TextCtrl(jump_panel, -1, "jump panel in notebook2",
-                            wx.DefaultPosition, wx.Size(100, 150),
-                            wx.NO_BORDER | wx.TE_MULTILINE)
-        notebook.AddPage(text8, "Jump2")
-        jump_results = wx.ListCtrl(jump_panel, -1, style=wx.LC_REPORT)
-        jump_results.InsertColumn(0,'result', width=100)
-        jump_results.InsertColumn(1,'object', width=80)
+        search_bar_find = tools_search.AddSimpleTool(-1, "Find", wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN))
+        search_bar_match_case = tools_search.AddToggleTool(-1, wx.ArtProvider.GetBitmap(wx.ART_FILE_SAVE), wx.NullBitmap)
+        search_bar_match_entire_field = tools_search.AddToggleTool(-1, wx.ArtProvider.GetBitmap(wx.ART_FILE_SAVE), wx.NullBitmap)
+        search_bar_match_nodes = tools_search.AddToggleTool(-1, wx.ArtProvider.GetBitmap(wx.ART_FILE_SAVE), wx.NullBitmap)
+        tb_save_as_file = tools_search.AddSimpleTool(-1, "Save As", wx.ArtProvider.GetBitmap(wx.ART_FILE_SAVE_AS))
+        tools_search.Realize()
+        search_sizer.Add(tools_search, 0, flag=wx.TOP)
+
+        notebook = aui.AuiNotebook(search_panel)
+
+        jump_results = wx.ListCtrl(search_panel, -1, style=wx.LC_REPORT)
+        jump_results.InsertColumn(0,'Jump To', width=100)
+        jump_results.InsertColumn(1,'Object', width=80)
         jump_results.Append(("first", "base"))
         jump_results.Append(("second", "base"))
         jump_results.Append(("third", "base"))
         jump_results.Append(("home", "plate"))
-        notebook.AddPage(jump_results, "Jump3")
-        pbox.Add(notebook, 1, flag=wx.EXPAND)
+        notebook.AddPage(jump_results, "Jump")
 
+        search_results = wx.ListCtrl(search_panel, -1, style=wx.LC_REPORT)
+        search_results.AppendColumn('Found Item', width=100)
+        search_results.AppendColumn('Type', width=80)
+        search_results.AppendColumn('Class', width=80)
+        search_results.AppendColumn('Object', width=80)
+        search_results.AppendColumn('Field', width=80)
+        search_results.Append(("a", "base"))
+        search_results.Append(("b", "base"))
+        search_results.Append(("c", "base"))
+        search_results.Append(("d", "plate"))
+        notebook.AddPage(search_results, "Search: <text>")
 
-        #button1 = wx.Button(pnl, -1, "click me")
-        #pbox.Add(button1, 1, flag=wx.ALL)
-
-        #text5 = wx.TextCtrl(pnl, -1, "Bottom Text in Panel",
-        #                    wx.DefaultPosition, wx.Size(200, 150),
-        #                    wx.NO_BORDER | wx.TE_MULTILINE)
-        #pbox.Add(text5, 1, flag=wx.EXPAND)
-        pnl.SetSizer(pbox)
-        self._mgr.AddPane(pnl, aui.AuiPaneInfo().Bottom().Name("bottom_search").Caption("Jump and Search"))
+        search_sizer.Add(notebook, 1, flag=wx.EXPAND)
+        search_panel.SetSizer(search_sizer)
+        self._mgr.AddPane(search_panel, aui.AuiPaneInfo().Bottom().Name("bottom_search").Caption("Jump and Search")
+                          .MinSize(150,150))
 
         # Layer(2) allows it to take all of left side
-        self._mgr.AddPane(self.object_list_tree, aui.AuiPaneInfo().Left().Layer(2).Caption("List of Input Objects"))
+        self._mgr.AddPane(self.object_list_tree, aui.AuiPaneInfo().Left().Layer(2).Caption("List of Input Objects")
+                          .MinSize(400,400))
 
         # tell the manager to "commit" all the changes just made
         self._mgr.Update()
