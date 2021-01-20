@@ -12,7 +12,7 @@ from epjsoneditor.interface.settings_dialog import SettingsDialog
 class EpJsonEditorFrame(wx.Frame):
 
     def __init__(self, parent, id=-1, title="epJSON Editor - ", pos=wx.DefaultPosition,
-                 size=(1800, 1000), style=wx.DEFAULT_FRAME_STYLE):
+                 size=(1500, 1000), style=wx.DEFAULT_FRAME_STYLE):
         wx.Frame.__init__(self, parent, id, title, pos, size, style)
 
         self._mgr = aui.AuiManager()
@@ -51,7 +51,6 @@ class EpJsonEditorFrame(wx.Frame):
                                             wx.DefaultPosition, wx.Size(200, 150),
                                             wx.NO_BORDER | wx.TE_MULTILINE)
 
-
         text4 = wx.TextCtrl(self, -1, "Main content window",
                             wx.DefaultPosition, wx.Size(600, 650),
                             wx.NO_BORDER | wx.TE_MULTILINE)
@@ -67,69 +66,7 @@ class EpJsonEditorFrame(wx.Frame):
         self._mgr.AddPane(self.main_grid, aui.AuiPaneInfo().Name("grid_content").
                           CenterPane().Hide().MinimizeButton(True))
 
-        # set up the pane that contains the Jump and Search tabs and toolbar
-        search_panel = wx.Panel(self)
-        search_sizer = wx.BoxSizer(wx.VERTICAL)
-
-        tools_search = aui.AuiToolBar(search_panel, -1, wx.DefaultPosition, wx.DefaultSize) # agwStyle=aui.AUI_TB_TEXT
-        tools_search.SetToolBitmapSize(wx.Size(24, 24))
-
-        tools_search.AddLabel(-1, "Search for:", 60)
-        search_field = wx.ComboBox(tools_search,value='', choices=['zone','building','lighting'], size=(200,20))
-        tools_search.AddControl(search_field)
-
-        search_bar_find = tools_search.AddSimpleTool(-2, "Find", wx.ArtProvider.GetBitmap(wx.ART_FIND))
-        tools_search.AddSpacer(30)
-        tools_search.AddLabel(-3, "Match:", 35)
-        match_case = wx.CheckBox(tools_search, wx.ID_ANY, "Case")
-        tools_search.AddControl(match_case)
-        match_entire_field = wx.CheckBox(tools_search, wx.ID_ANY, "Entire Field")
-        tools_search.AddControl(match_entire_field)
-        match_node_names_only = wx.CheckBox(tools_search, wx.ID_ANY, "Node Names Only")
-        tools_search.AddControl(match_node_names_only)
-        tools_search.AddSpacer(30)
-#        search_previous = tools_search.AddSimpleTool(-7, "Find", wx.ArtProvider.GetBitmap(wx.ART_GO_BACK))
-#       search_next = tools_search.AddSimpleTool(-8, "Find", wx.ArtProvider.GetBitmap(wx.ART_GO_FORWARD))
-        tools_search.AddSpacer(30)
-        jump_button = wx.Button(tools_search, id = wx.ID_ANY, label="Jump")
-        tools_search.AddControl(jump_button)
-        tools_search.AddSpacer(30)
-        tools_search.AddLabel(-1, "Replace With:", 70)
-        replace_field = wx.ComboBox(tools_search,value='', choices=['zone','building','lighting'], size=(200,20))
-        tools_search.AddControl(replace_field)
-        replace_single_button = wx.Button(tools_search, id = wx.ID_ANY, label="Single")
-        tools_search.AddControl(replace_single_button)
-        replace_all_button = wx.Button(tools_search, id = wx.ID_ANY, label="All")
-        tools_search.AddControl(replace_all_button)
-
-        tools_search.Realize()
-        search_sizer.Add(tools_search, 0, flag=wx.TOP)
-
-        notebook = aui.AuiNotebook(search_panel)
-
-        jump_results = wx.ListCtrl(search_panel, -1, style=wx.LC_REPORT)
-        jump_results.InsertColumn(0,'Jump To', width=100)
-        jump_results.InsertColumn(1,'Object', width=80)
-        jump_results.Append(("first", "base"))
-        jump_results.Append(("second", "base"))
-        jump_results.Append(("third", "base"))
-        jump_results.Append(("home", "plate"))
-        notebook.AddPage(jump_results, "Jump")
-
-        search_results = wx.ListCtrl(search_panel, -1, style=wx.LC_REPORT)
-        search_results.AppendColumn('Found Item', width=100)
-        search_results.AppendColumn('Type', width=80)
-        search_results.AppendColumn('Class', width=80)
-        search_results.AppendColumn('Object', width=80)
-        search_results.AppendColumn('Field', width=80)
-        search_results.Append(("a", "base"))
-        search_results.Append(("b", "base"))
-        search_results.Append(("c", "base"))
-        search_results.Append(("d", "plate"))
-        notebook.AddPage(search_results, "Search: <text>")
-
-        search_sizer.Add(notebook, 1, flag=wx.EXPAND)
-        search_panel.SetSizer(search_sizer)
+        search_panel = self.create_jump_search_pane()
         self._mgr.AddPane(search_panel, aui.AuiPaneInfo().Bottom().Name("bottom_search").Caption("Jump and Search")
                           .MinSize(150,150))
 
@@ -193,6 +130,73 @@ class EpJsonEditorFrame(wx.Frame):
         self._mgr.AddPane(tb1, aui.AuiPaneInfo().Name("tb1").Caption("Primary Toolbar").
                           ToolbarPane().Top())
         self._mgr.Update()
+
+    def create_jump_search_pane(self):
+        # set up the pane that contains the Jump and Search tabs and toolbar
+        search_panel = wx.Panel(self)
+        search_sizer = wx.BoxSizer(wx.VERTICAL)
+
+        tools_search = aui.AuiToolBar(search_panel, -1, wx.DefaultPosition, wx.DefaultSize,
+                                      agwStyle=aui.AUI_TB_PLAIN_BACKGROUND)
+        tools_search.SetToolBitmapSize(wx.Size(24, 24))
+
+        tools_search.AddLabel(-1, "Find:", 25)
+        search_field = wx.ComboBox(tools_search, value='', choices=['zone', 'building', 'lighting'], size=(200, 20))
+        tools_search.AddControl(search_field)
+
+        search_bar_find = tools_search.AddSimpleTool(-2, "Find", wx.ArtProvider.GetBitmap(wx.ART_FIND))
+        tools_search.AddSpacer(20)
+        tools_search.AddLabel(-3, "Match:", 30)
+        match_case = wx.CheckBox(tools_search, wx.ID_ANY, "Case")
+        tools_search.AddControl(match_case)
+        match_entire_field = wx.CheckBox(tools_search, wx.ID_ANY, "Entire Field")
+        tools_search.AddControl(match_entire_field)
+        match_node_names_only = wx.CheckBox(tools_search, wx.ID_ANY, "Nodes Only")
+        tools_search.AddControl(match_node_names_only)
+        #        tools_search.AddSpacer(20)
+        #        search_previous = tools_search.AddSimpleTool(-7, "Find", wx.ArtProvider.GetBitmap(wx.ART_GO_BACK))
+        #        search_next = tools_search.AddSimpleTool(-8, "Find", wx.ArtProvider.GetBitmap(wx.ART_GO_FORWARD))
+        tools_search.AddSpacer(20)
+        jump_button = wx.Button(tools_search, id=wx.ID_ANY, label="Jump", size=(60,20))
+        tools_search.AddControl(jump_button)
+        tools_search.AddSpacer(20)
+        tools_search.AddLabel(-1, "Replace:", 40)
+        replace_field = wx.ComboBox(tools_search, value='', choices=['zone', 'building', 'lighting'], size=(200, 20))
+        tools_search.AddControl(replace_field)
+        replace_single_button = wx.Button(tools_search, id=wx.ID_ANY, label="Single", size=(50,20))
+        tools_search.AddControl(replace_single_button)
+        replace_all_button = wx.Button(tools_search, id=wx.ID_ANY, label="All", size=(50,20))
+        tools_search.AddControl(replace_all_button)
+
+        tools_search.Realize()
+        search_sizer.Add(tools_search, 0, flag=wx.TOP)
+
+        notebook = aui.AuiNotebook(search_panel)
+
+        jump_results = wx.ListCtrl(search_panel, -1, style=wx.LC_REPORT)
+        jump_results.InsertColumn(0, 'Jump To', width=100)
+        jump_results.InsertColumn(1, 'Object', width=80)
+        jump_results.Append(("first", "base"))
+        jump_results.Append(("second", "base"))
+        jump_results.Append(("third", "base"))
+        jump_results.Append(("home", "plate"))
+        notebook.AddPage(jump_results, "Jump")
+
+        search_results = wx.ListCtrl(search_panel, -1, style=wx.LC_REPORT)
+        search_results.AppendColumn('Found Item', width=100)
+        search_results.AppendColumn('Type', width=80)
+        search_results.AppendColumn('Class', width=80)
+        search_results.AppendColumn('Object', width=80)
+        search_results.AppendColumn('Field', width=80)
+        search_results.Append(("a", "base"))
+        search_results.Append(("b", "base"))
+        search_results.Append(("c", "base"))
+        search_results.Append(("d", "plate"))
+        notebook.AddPage(search_results, "Search: <text>")
+
+        search_sizer.Add(notebook, 1, flag=wx.EXPAND)
+        search_panel.SetSizer(search_sizer)
+        return search_panel
 
     def handle_open_file(self, _):
         with wx.FileDialog(self, "Open EnergyPlus epJSON file", wildcard="epJSON files (*.epJSON)|*.epJSON",
