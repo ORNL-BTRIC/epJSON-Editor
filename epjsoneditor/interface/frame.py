@@ -68,11 +68,11 @@ class EpJsonEditorFrame(wx.Frame):
 
         search_panel = self.create_jump_search_pane()
         self._mgr.AddPane(search_panel, aui.AuiPaneInfo().Bottom().Name("bottom_search").Caption("Jump and Search")
-                          .MinSize(150,150))
+                          .MinSize(150, 150))
 
         # Layer(2) allows it to take all of left side
         self._mgr.AddPane(self.object_list_tree, aui.AuiPaneInfo().Left().Layer(2).Caption("List of Input Objects")
-                          .MinSize(400,400))
+                          .MinSize(400, 400))
 
         # tell the manager to "commit" all the changes just made
         self._mgr.Update()
@@ -157,15 +157,15 @@ class EpJsonEditorFrame(wx.Frame):
         #        search_previous = tools_search.AddSimpleTool(-7, "Find", wx.ArtProvider.GetBitmap(wx.ART_GO_BACK))
         #        search_next = tools_search.AddSimpleTool(-8, "Find", wx.ArtProvider.GetBitmap(wx.ART_GO_FORWARD))
         tools_search.AddSpacer(20)
-        jump_button = wx.Button(tools_search, id=wx.ID_ANY, label="Jump", size=(60,20))
+        jump_button = wx.Button(tools_search, id=wx.ID_ANY, label="Jump", size=(60, 20))
         tools_search.AddControl(jump_button)
         tools_search.AddSpacer(20)
         tools_search.AddLabel(-1, "Replace:", 40)
         replace_field = wx.ComboBox(tools_search, value='', choices=['zone', 'building', 'lighting'], size=(200, 20))
         tools_search.AddControl(replace_field)
-        replace_single_button = wx.Button(tools_search, id=wx.ID_ANY, label="Single", size=(50,20))
+        replace_single_button = wx.Button(tools_search, id=wx.ID_ANY, label="Single", size=(50, 20))
         tools_search.AddControl(replace_single_button)
-        replace_all_button = wx.Button(tools_search, id=wx.ID_ANY, label="All", size=(50,20))
+        replace_all_button = wx.Button(tools_search, id=wx.ID_ANY, label="All", size=(50, 20))
         tools_search.AddControl(replace_all_button)
 
         tools_search.Realize()
