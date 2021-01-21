@@ -24,12 +24,15 @@ class EpJsonEditorFrame(wx.Frame):
         self.explanation_text = None
         self.object_list_tree = None
         self.object_list_root = None
+        self.name_to_object_list_item = {}
         self.main_grid = None
+        self.selected_object_tree_item = None
         self.selected_object_name = None
         self.current_file_path = None
         self.use_si_units = True
         self.row_fields = None
         self.column_input_object_names = None
+        self.jump_results = None
         self.unit_conversions = {}
         self.read_unit_conversions()
         self.current_file = {}
@@ -43,9 +46,10 @@ class EpJsonEditorFrame(wx.Frame):
         self.object_list_tree = wx.TreeCtrl(self, style=wx.TR_HIDE_ROOT)
         self.object_list_root = self.object_list_tree.AddRoot("All Input Objects")
         self.object_list_tree.SetItemData(self.object_list_root, None)
-        for child in self.data_dictionary.keys():
-            child = self.object_list_tree.AppendItem(self.object_list_root, child)
+        for name_of_class in self.data_dictionary.keys():
+            child = self.object_list_tree.AppendItem(self.object_list_root, self.object_list_format(name_of_class, 0))
             self.object_list_tree.Expand(child)
+            self.name_to_object_list_item[name_of_class] = child
 
         self.explanation_text = wx.TextCtrl(self, -1, "Explanation of the selected input object and field",
                                             wx.DefaultPosition, wx.Size(200, 150),
@@ -77,7 +81,7 @@ class EpJsonEditorFrame(wx.Frame):
         # tell the manager to "commit" all the changes just made
         self._mgr.Update()
 
-        # it works better to have TextCntrl for CenterPane shown and hidden and the grid being hidden then shown
+        # it works better to have TextCtrl for CenterPane shown and hidden and the grid being hidden then shown
         self._mgr.GetPane("grid_content").Show(True)
         self._mgr.GetPane("text_content").Show(False)
         self._mgr.Update()
@@ -173,14 +177,14 @@ class EpJsonEditorFrame(wx.Frame):
 
         notebook = aui.AuiNotebook(search_panel)
 
-        jump_results = wx.ListCtrl(search_panel, -1, style=wx.LC_REPORT)
-        jump_results.InsertColumn(0, 'Jump To', width=100)
-        jump_results.InsertColumn(1, 'Object', width=80)
-        jump_results.Append(("first", "base"))
-        jump_results.Append(("second", "base"))
-        jump_results.Append(("third", "base"))
-        jump_results.Append(("home", "plate"))
-        notebook.AddPage(jump_results, "Jump")
+        self.jump_results = wx.ListCtrl(search_panel, -1, style=wx.LC_REPORT)
+        self.jump_results.InsertColumn(0, 'Jump To', width=100)
+        self.jump_results.InsertColumn(1, 'Object', width=80)
+        self.jump_results.Append(("first", "base"))
+        self.jump_results.Append(("second", "base"))
+        self.jump_results.Append(("third", "base"))
+        self.jump_results.Append(("home", "plate"))
+        notebook.AddPage(self.jump_results, "Jump")
 
         search_results = wx.ListCtrl(search_panel, -1, style=wx.LC_REPORT)
         search_results.AppendColumn('Found Item', width=100)
@@ -226,6 +230,7 @@ class EpJsonEditorFrame(wx.Frame):
             with open(path_name) as input_file:
                 self.current_file = json.load(input_file)
                 self.gather_active_references()
+                self.update_list_of_object_counts()
             self.Refresh()
 
     def handle_save_file(self, _):
@@ -262,10 +267,33 @@ class EpJsonEditorFrame(wx.Frame):
         event.Skip()
 
     def select_object_list_item(self, event):
-        self.selected_object_name = self.object_list_tree.GetItemText(event.GetItem())
+        selected_line = self.object_list_tree.GetItemText(event.GetItem())
+        self.selected_object_tree_item = event.GetItem()
+        self.selected_object_name = selected_line[7:]  # remove the bracketed number
         self.display_explanation(self.selected_object_name)
         self.update_grid(self.selected_object_name)
         self.Refresh()
+
+    def update_list_of_object_counts(self):
+        # first make all items grey
+        for tree_item in self.name_to_object_list_item.values():
+            self.object_list_tree.SetItemTextColour(tree_item, wx.NamedColour("GREY"))
+        for object_name, object_dict in self.current_file.items():
+            self.update_list_of_object_count(object_name, len(object_dict))
+        self.Refresh()
+        return
+
+    def update_list_of_object_count(self, object_name, count):
+        tree_item = self.name_to_object_list_item[object_name]
+        self.object_list_tree.SetItemText(tree_item, self.object_list_format(object_name, count))
+        if count > 0:
+            self.object_list_tree.SetItemTextColour(tree_item, "BLACK")
+        return
+
+    @staticmethod
+    def object_list_format(name, count):
+        count_string = str(count).zfill(4)
+        return f"[{count_string}] {name}"
 
     def display_explanation(self, object_name, row_number=-1):
         explanation = f"Object Description: {object_name}" + os.linesep + os.linesep + \
@@ -417,25 +445,28 @@ class EpJsonEditorFrame(wx.Frame):
 
     def is_value_valid(self, row_index, value):
         row_field = self.row_fields[row_index]
-        if row_field['type'] == 'number':
-            numeric_value = float(value)
-            if 'minimum' in row_field:
-                if 'exclusiveMinimum' in row_field:
-                    if numeric_value <= row_field['minimum']:
-                        return False
-                else:
-                    if numeric_value < row_field['minimum']:
-                        return False
-            if 'maximum' in row_field:
-                if 'exclusiveMaximum' in row_field:
-                    if numeric_value >= row_field['maximum']:
-                        return False
-                else:
-                    if numeric_value > row_field['maximum']:
-                        return False
-        elif 'enum' in row_field:
-            if value not in row_field['enum']:
-                return False
+        if 'type' in row_field:
+            if row_field['type'] == 'number':
+                numeric_value = float(value)
+                if 'minimum' in row_field:
+                    if 'exclusiveMinimum' in row_field:
+                        if numeric_value <= row_field['minimum']:
+                            return False
+                    else:
+                        if numeric_value < row_field['minimum']:
+                            return False
+                if 'maximum' in row_field:
+                    if 'exclusiveMaximum' in row_field:
+                        if numeric_value >= row_field['maximum']:
+                            return False
+                    else:
+                        if numeric_value > row_field['maximum']:
+                            return False
+            elif 'enum' in row_field:
+                if value not in row_field['enum']:
+                    return False
+        else:
+            print(f'type not found in rowfield for {row_index} and value {value} may be due to anyOf')
         return True
 
     def convert_unit_using_row_index(self, value_to_convert, row_index):
@@ -465,10 +496,12 @@ class EpJsonEditorFrame(wx.Frame):
         cell_column = event.GetCol()
         active_field = self.row_fields[cell_row]
         object_name = self.main_grid.GetCellValue(0, cell_column)
+        value_string = self.main_grid.GetCellValue(cell_row, cell_column)
         print(f"left click ({cell_row}, {event.GetCol()}) for field {active_field['display_field_name']} "
-              f"for object {object_name}")
+              f"for object {object_name} with a value of {value_string}")
         self.display_explanation(self.selected_object_name, row_number=cell_row)
         self.set_cell_choices(cell_row, cell_column)
+        self.populate_jump_list(value_string, object_name, active_field)
         event.Skip()
 
     def handle_cell_changed(self, event):
@@ -581,5 +614,6 @@ class EpJsonEditorFrame(wx.Frame):
         return current_reference_list
 
 
-# class JumpAndSearchPanel(wx.Panel):
-#
+    def populate_jump_list(self, value_string, object_name, active_field):
+        self.selected_object_name
+        return
