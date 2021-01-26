@@ -3,6 +3,7 @@ import wx.grid
 import wx.lib.agw.aui as aui
 import os
 import json
+import time
 
 from epjsoneditor.schemainputobject import SchemaInputObject
 from epjsoneditor.referencesfromdatadictionary import ReferencesFromDataDictionary
@@ -32,7 +33,11 @@ class EpJsonEditorFrame(wx.Frame):
         self.use_si_units = True
         self.row_fields = None
         self.column_input_object_names = None
-        self.jump_results = None
+        self.name_to_column_number = {}
+        self.field_to_row_number = {}
+        self.field_name_to_display_name = {}
+        self.jump_destination_list = None
+        self.jumps = {}
         self.unit_conversions = {}
         self.read_unit_conversions()
         self.current_file = {}
@@ -65,6 +70,7 @@ class EpJsonEditorFrame(wx.Frame):
 
         self.main_grid = self.create_grid()
         self.Bind(wx.grid.EVT_GRID_CELL_LEFT_CLICK, self.handle_cell_left_click)
+        self.Bind(wx.grid.EVT_GRID_SELECT_CELL, self.handle_cell_select_cell)
         self.Bind(wx.grid.EVT_GRID_CELL_CHANGED, self.handle_cell_changed)
 
         self._mgr.AddPane(self.main_grid, aui.AuiPaneInfo().Name("grid_content").
@@ -89,7 +95,7 @@ class EpJsonEditorFrame(wx.Frame):
         self.create_toolbar()
 
         self.Bind(wx.EVT_CLOSE, self.handle_close)
-        self.Bind(wx.EVT_TREE_SEL_CHANGED, self.select_object_list_item, self.object_list_tree)
+        self.Bind(wx.EVT_TREE_SEL_CHANGED, self.handle_select_object_list_item, self.object_list_tree)
 
     def create_grid(self):
         grid = wx.grid.Grid(self, -1, wx.Point(0, 0), wx.Size(150, 250),
@@ -162,6 +168,7 @@ class EpJsonEditorFrame(wx.Frame):
         #        search_next = tools_search.AddSimpleTool(-8, "Find", wx.ArtProvider.GetBitmap(wx.ART_GO_FORWARD))
         tools_search.AddSpacer(20)
         jump_button = wx.Button(tools_search, id=wx.ID_ANY, label="Jump", size=(60, 20))
+        jump_button.Bind(wx.EVT_BUTTON, self.handle_jump_button)
         tools_search.AddControl(jump_button)
         tools_search.AddSpacer(20)
         tools_search.AddLabel(-1, "Replace:", 40)
@@ -177,14 +184,13 @@ class EpJsonEditorFrame(wx.Frame):
 
         notebook = aui.AuiNotebook(search_panel)
 
-        self.jump_results = wx.ListCtrl(search_panel, -1, style=wx.LC_REPORT)
-        self.jump_results.InsertColumn(0, 'Jump To', width=100)
-        self.jump_results.InsertColumn(1, 'Object', width=80)
-        self.jump_results.Append(("first", "base"))
-        self.jump_results.Append(("second", "base"))
-        self.jump_results.Append(("third", "base"))
-        self.jump_results.Append(("home", "plate"))
-        notebook.AddPage(self.jump_results, "Jump")
+        self.jump_destination_list = wx.ListCtrl(search_panel, -1, style=wx.LC_REPORT)
+        self.jump_destination_list.AppendColumn('Name', width=200)
+        self.jump_destination_list.AppendColumn('Object', width=200)
+        self.jump_destination_list.AppendColumn('Field', width=200)
+        self.jump_destination_list.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.handle_jump_double_click)
+
+        notebook.AddPage(self.jump_destination_list, "Jump")
 
         search_results = wx.ListCtrl(search_panel, -1, style=wx.LC_REPORT)
         search_results.AppendColumn('Found Item', width=100)
@@ -223,6 +229,28 @@ class EpJsonEditorFrame(wx.Frame):
         settings_dialog.Destroy()
         self.update_grid(self.selected_object_name)
 
+    def handle_jump_button(self, _):
+        selected_destination = self.jump_destination_list.GetFirstSelected()
+        if selected_destination != -1:
+            print(selected_destination)
+            name_of_object = self.jump_destination_list.GetItemText(selected_destination, 0)
+            input_object_destination = self.jump_destination_list.GetItemText(selected_destination, 1)
+            field_destination = self.jump_destination_list.GetItemText(selected_destination, 2)
+            print(name_of_object, input_object_destination, field_destination)
+            self.go_to_cell(input_object_destination, name_of_object, field_destination)
+
+    def handle_jump_double_click(self, event):
+        self.handle_jump_button(event)
+
+    def go_to_cell(self, input_object, name_of_object, field_name):
+        object_list_item = self.name_to_object_list_item[input_object]
+        self.object_list_tree.SelectItem(object_list_item)  # this triggers update_grid
+        column_number = self.name_to_column_number[name_of_object]
+        row_number = self.field_to_row_number[field_name]
+        self.main_grid.GoToCell(row_number, column_number)
+        self.main_grid.SetFocus()
+        self.enter_cell(row_number, column_number)
+
     def load_current_file(self, path_name):
         if os.path.exists(path_name):
             self.current_file_path = path_name
@@ -231,6 +259,7 @@ class EpJsonEditorFrame(wx.Frame):
                 self.current_file = json.load(input_file)
                 self.gather_active_references()
                 self.update_list_of_object_counts()
+                self.update_dict_of_jumps()
             self.Refresh()
 
     def handle_save_file(self, _):
@@ -266,18 +295,19 @@ class EpJsonEditorFrame(wx.Frame):
         self._mgr.UnInit()
         event.Skip()
 
-    def select_object_list_item(self, event):
+    def handle_select_object_list_item(self, event):
         selected_line = self.object_list_tree.GetItemText(event.GetItem())
         self.selected_object_tree_item = event.GetItem()
         self.selected_object_name = selected_line[7:]  # remove the bracketed number
         self.display_explanation(self.selected_object_name)
+        self.jump_destination_list.DeleteAllItems()
         self.update_grid(self.selected_object_name)
         self.Refresh()
 
     def update_list_of_object_counts(self):
         # first make all items grey
         for tree_item in self.name_to_object_list_item.values():
-            self.object_list_tree.SetItemTextColour(tree_item, wx.NamedColour("GREY"))
+            self.object_list_tree.SetItemTextColour(tree_item, "GREY")
         for object_name, object_dict in self.current_file.items():
             self.update_list_of_object_count(object_name, len(object_dict))
         self.Refresh()
@@ -337,6 +367,8 @@ class EpJsonEditorFrame(wx.Frame):
         self.set_grid_settings()
         print(selected_object_name)
         selected_object_dict = self.data_dictionary[selected_object_name]
+        self.field_name_to_display_name = {}
+        self.field_to_row_number = {}
         # construct list that contains field dictionary for each row of the grid
         self.row_fields = self.create_row_by_row_field_list(selected_object_dict, selected_object_name)
         new_columns = 1
@@ -346,6 +378,8 @@ class EpJsonEditorFrame(wx.Frame):
         # add field names and units
         for row_counter, row_field in enumerate(self.row_fields):
             self.main_grid.SetRowLabelValue(row_counter, row_field["display_field_name"])
+            self.field_to_row_number[row_field["display_field_name"]] = row_counter
+            self.field_name_to_display_name[row_field["field_name"]] = row_field["display_field_name"]
             self.main_grid.SetCellValue(row_counter, 0, self.display_unit(row_field))
         # populate the grid with the field values from the current file
         max_row = self.main_grid.GetNumberRows()
@@ -355,6 +389,7 @@ class EpJsonEditorFrame(wx.Frame):
             self.column_input_object_names = ['skip column zero', ]  # we never need the first element
             for column_counter, active_input_object_name in enumerate(active_input_objects, start=1):
                 self.column_input_object_names.append(active_input_object_name)
+                self.name_to_column_number[active_input_object_name] = column_counter
                 for row_counter, row_field in enumerate(self.row_fields):
                     if column_counter < max_col and row_counter < max_row:
                         display_value, unconverted_value = self.display_cell_value(row_counter,
@@ -446,7 +481,7 @@ class EpJsonEditorFrame(wx.Frame):
     def is_value_valid(self, row_index, value):
         row_field = self.row_fields[row_index]
         if 'type' in row_field:
-            if row_field['type'] == 'number':
+            if row_field['type'] == 'number' and value != '':
                 numeric_value = float(value)
                 if 'minimum' in row_field:
                     if 'exclusiveMinimum' in row_field:
@@ -466,7 +501,7 @@ class EpJsonEditorFrame(wx.Frame):
                 if value not in row_field['enum']:
                     return False
         else:
-            print(f'type not found in rowfield for {row_index} and value {value} may be due to anyOf')
+            print(f'type not found in row field for {row_index} and value {value} may be due to anyOf')
         return True
 
     def convert_unit_using_row_index(self, value_to_convert, row_index):
@@ -494,15 +529,24 @@ class EpJsonEditorFrame(wx.Frame):
     def handle_cell_left_click(self, event):
         cell_row = event.GetRow()
         cell_column = event.GetCol()
-        active_field = self.row_fields[cell_row]
-        object_name = self.main_grid.GetCellValue(0, cell_column)
+        self.enter_cell(cell_row, cell_column)
+        event.Skip()
+
+    def handle_cell_select_cell(self, event):
+        cell_row = event.GetRow()
+        cell_column = event.GetCol()
+        self.enter_cell(cell_row, cell_column)
+        event.Skip()
+
+    def enter_cell(self, cell_row, cell_column):
+        # active_field = self.row_fields[cell_row]
+        # object_name = self.main_grid.GetCellValue(0, cell_column)
         value_string = self.main_grid.GetCellValue(cell_row, cell_column)
-        print(f"left click ({cell_row}, {event.GetCol()}) for field {active_field['display_field_name']} "
-              f"for object {object_name} with a value of {value_string}")
+        # print(f"left click ({cell_row}, {cell_column}) for field {active_field['display_field_name']} "
+        #       f"for object {object_name} with a value of {value_string}")
         self.display_explanation(self.selected_object_name, row_number=cell_row)
         self.set_cell_choices(cell_row, cell_column)
-        self.populate_jump_list(value_string, object_name, active_field)
-        event.Skip()
+        self.populate_jump_list(value_string)
 
     def handle_cell_changed(self, event):
         # remove the characters after the pipe character | that are shown in the dropdown list.
@@ -580,8 +624,8 @@ class EpJsonEditorFrame(wx.Frame):
          is closer to what is needed for displaying the grid elements
         """
         with open("c:/EnergyPlusV9-4-0/Energy+.schema.epJSON") as schema_file:
-            epschema = json.load(schema_file)
-            for object_name, json_properties in epschema["properties"].items():
+            ep_schema = json.load(schema_file)
+            for object_name, json_properties in ep_schema["properties"].items():
                 self.data_dictionary[object_name] = SchemaInputObject(json_properties)
             references_from_data_dictionary = ReferencesFromDataDictionary(self.data_dictionary)
             self.cross_references = references_from_data_dictionary.reference_fields
@@ -613,7 +657,46 @@ class EpJsonEditorFrame(wx.Frame):
                           f"and the field is {field_name}")
         return current_reference_list
 
-
-    def populate_jump_list(self, value_string, object_name, active_field):
-        self.selected_object_name
+    def populate_jump_list(self, value_string):
+        self.jump_destination_list.DeleteAllItems()
+        if value_string in self.jumps:
+            destinations = self.jumps[value_string]
+            for destination in destinations:
+                self.jump_destination_list.Append(destination)
         return
+
+    def update_dict_of_jumps(self):
+        start = time.time()
+        for object_name, object_instances in self.current_file.items():
+            input_fields_of_object = self.data_dictionary[object_name].input_fields
+            for input_field, field_description in input_fields_of_object.items():
+                if 'field_name_with_spaces' in field_description:
+                    field_name_no_underscore = field_description['field_name_with_spaces']
+                else:
+                    field_name_no_underscore = input_field
+                if 'type' in field_description:
+                    if field_description['type'] == 'string' and 'enum' not in field_description:
+                        for cur_name, cur_fields in object_instances.items():
+                            if input_field in cur_fields:
+                                jump_string = cur_fields[input_field]
+                                self.add_jump_string(jump_string, object_name, cur_name, field_name_no_underscore)
+
+                            elif 'name' in input_fields_of_object:
+                                self.add_jump_string(cur_name, object_name, cur_name, 'Name')
+        # remove items from list of jump that are singles
+        to_deletes = []
+        for jump_name, destination_of_jump in self.jumps.items():
+            if len(destination_of_jump) == 1:
+                to_deletes.append(jump_name)
+        for to_delete in to_deletes:
+            del self.jumps[to_delete]
+        end = time.time()
+        print(f"time for update_dict_of_jumps is {end - start}")
+        return
+
+    def add_jump_string(self, jump_string, object_name, cur_name, input_field):
+        destination_of_jump = (cur_name, object_name, input_field)
+        if jump_string not in self.jumps:
+            self.jumps[jump_string] = []
+        if destination_of_jump not in self.jumps[jump_string]:
+            self.jumps[jump_string].append(destination_of_jump)
