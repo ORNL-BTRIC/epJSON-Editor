@@ -105,39 +105,52 @@ class EpJsonEditorFrame(wx.Frame):
 
     def create_toolbar(self):
         # create some toolbars
-        tb1 = aui.AuiToolBar(self, -1, wx.DefaultPosition, wx.DefaultSize,
+        tool_main = aui.AuiToolBar(self, -1, wx.DefaultPosition, wx.DefaultSize,
                              agwStyle=aui.AUI_TB_TEXT)
-        tb1.SetToolBitmapSize(wx.Size(48, 48))
-        tb1.AddSimpleTool(10, "New", wx.ArtProvider.GetBitmap(wx.ART_NEW))
+        tool_main.SetToolBitmapSize(wx.Size(48, 48))
+        tool_main.AddSimpleTool(10, "New", wx.ArtProvider.GetBitmap(wx.ART_NEW))
 
-        tb_open_file = tb1.AddSimpleTool(11, "Open", wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN))
+        tb_open_file = tool_main.AddSimpleTool(11, "Open", wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN))
         self.Bind(wx.EVT_TOOL, self.handle_open_file, tb_open_file)
 
-        tb_save_file = tb1.AddSimpleTool(12, "Save", wx.ArtProvider.GetBitmap(wx.ART_FILE_SAVE))
+        tb_save_file = tool_main.AddSimpleTool(12, "Save", wx.ArtProvider.GetBitmap(wx.ART_FILE_SAVE))
         self.Bind(wx.EVT_TOOL, self.handle_save_file, tb_save_file)
 
-        tb_save_as_file = tb1.AddSimpleTool(13, "Save As", wx.ArtProvider.GetBitmap(wx.ART_FILE_SAVE_AS))
+        tb_save_as_file = tool_main.AddSimpleTool(13, "Save As", wx.ArtProvider.GetBitmap(wx.ART_FILE_SAVE_AS))
         self.Bind(wx.EVT_TOOL, self.handle_save_as_file, tb_save_as_file)
 
-        tb1.AddSeparator()
-        tb1.AddSimpleTool(14, "Undo", wx.ArtProvider.GetBitmap(wx.ART_UNDO))
-        tb1.AddSimpleTool(15, "Redo", wx.ArtProvider.GetBitmap(wx.ART_REDO))
-        tb1.AddSeparator()
-        tb1.AddSimpleTool(16, "New Obj", wx.ArtProvider.GetBitmap(wx.ART_PLUS))
-        tb1.AddSimpleTool(17, "Dup Obj", wx.ArtProvider.GetBitmap(wx.ART_GO_FORWARD))  # duplicate
-        tb1.AddSimpleTool(18, "Dup Obj + Chg", wx.ArtProvider.GetBitmap(wx.ART_GOTO_LAST))  # duplicate and change
-        tb1.AddSimpleTool(19, "Del Obj", wx.ArtProvider.GetBitmap(wx.ART_MINUS))
-        tb1.AddSimpleTool(20, "Copy Obj", wx.ArtProvider.GetBitmap(wx.ART_COPY))
-        tb1.AddSimpleTool(21, "Paste Obj", wx.ArtProvider.GetBitmap(wx.ART_PASTE))
-        # tb1.AddSeparator()
-        # tb1.AddTool(22, "IP Units", wx.ArtProvider.GetBitmap(wx.ART_GO_UP), wx.NullBitmap, kind=wx.ITEM_RADIO)
-        # tb1.AddTool(23, "SI Units", wx.ArtProvider.GetBitmap(wx.ART_GO_DOWN), wx.NullBitmap, kind=wx.ITEM_RADIO)
-        tb1.AddSeparator()
-        tb_settings = tb1.AddSimpleTool(25, "Settings", wx.ArtProvider.GetBitmap(wx.ART_EXECUTABLE_FILE))
+        tool_main.AddSeparator()
+        tool_main.AddSimpleTool(14, "Undo", wx.ArtProvider.GetBitmap(wx.ART_UNDO))
+        tool_main.AddSimpleTool(15, "Redo", wx.ArtProvider.GetBitmap(wx.ART_REDO))
+        tool_main.AddSeparator()
+
+        tb_new_object = tool_main.AddSimpleTool(16, "New Obj", wx.ArtProvider.GetBitmap(wx.ART_PLUS))
+        self.Bind(wx.EVT_TOOL, self.handle_new_object, tb_new_object)
+
+        tb_duplicate_object = tool_main.AddSimpleTool(17, "Dup Obj", wx.ArtProvider.GetBitmap(wx.ART_GO_FORWARD))
+        self.Bind(wx.EVT_TOOL, self.handle_duplicate_object, tb_duplicate_object)
+
+        tb_dup_change_object = tool_main.AddSimpleTool(18, "Dup Obj + Chg", wx.ArtProvider.GetBitmap(wx.ART_GOTO_LAST))
+        self.Bind(wx.EVT_TOOL, self.handle_tb_dup_change_object, tb_dup_change_object)
+
+        tb_delete_object = tool_main.AddSimpleTool(19, "Del Obj", wx.ArtProvider.GetBitmap(wx.ART_MINUS))
+        self.Bind(wx.EVT_TOOL, self.handle_tb_delete_object, tb_delete_object)
+
+        tb_copy_object = tool_main.AddSimpleTool(20, "Copy Obj", wx.ArtProvider.GetBitmap(wx.ART_COPY))
+        self.Bind(wx.EVT_TOOL, self.handle_tb_copy_object, tb_copy_object)
+
+        tb_paste_object = tool_main.AddSimpleTool(21, "Paste Obj", wx.ArtProvider.GetBitmap(wx.ART_PASTE))
+        self.Bind(wx.EVT_TOOL, self.handle_tb_paste_object, tb_paste_object)
+
+        # tool_main.AddSeparator()
+        # tool_main.AddTool(22, "IP Units", wx.ArtProvider.GetBitmap(wx.ART_GO_UP), wx.NullBitmap, kind=wx.ITEM_RADIO)
+        # tool_main.AddTool(23, "SI Units", wx.ArtProvider.GetBitmap(wx.ART_GO_DOWN), wx.NullBitmap, kind=wx.ITEM_RADIO)
+        tool_main.AddSeparator()
+        tb_settings = tool_main.AddSimpleTool(25, "Settings", wx.ArtProvider.GetBitmap(wx.ART_EXECUTABLE_FILE))
         self.Bind(wx.EVT_TOOL, self.handle_settings_toolbar_button, tb_settings)
-        tb1.AddSimpleTool(26, "Help", wx.ArtProvider.GetBitmap(wx.ART_HELP))
-        tb1.Realize()
-        self._mgr.AddPane(tb1, aui.AuiPaneInfo().Name("tb1").Caption("Primary Toolbar").
+        tool_main.AddSimpleTool(26, "Help", wx.ArtProvider.GetBitmap(wx.ART_HELP))
+        tool_main.Realize()
+        self._mgr.AddPane(tool_main, aui.AuiPaneInfo().Name("tool_main").Caption("Primary Toolbar").
                           ToolbarPane().Top())
         self._mgr.Update()
 
@@ -700,3 +713,28 @@ class EpJsonEditorFrame(wx.Frame):
             self.jumps[jump_string] = []
         if destination_of_jump not in self.jumps[jump_string]:
             self.jumps[jump_string].append(destination_of_jump)
+
+    def handle_new_object(self, event):
+        print("handle_new_object")
+
+    def handle_duplicate_object(self, event):
+        print("handle_duplicate_object")
+        current_column = self.main_grid.GetGridCursorCol()
+        object_name = self.main_grid.GetCellValue(0, current_column)
+        all_objects_in_class = self.current_file[self.selected_object_name]
+        original_object = all_objects_in_class[object_name]
+        duplicated_object = original_object.copy()
+        all_objects_in_class[object_name + "-copy"] = duplicated_object
+        self.update_grid(self.selected_object_name)
+
+    def handle_tb_dup_change_object(self, event):
+        print("handle_tb_dup_change_object")
+
+    def handle_tb_delete_object(self, event):
+        print("handle_tb_delete_object")
+
+    def handle_tb_copy_object(self, event):
+        print("handle_tb_copy_object")
+
+    def handle_tb_paste_object(self, event):
+        print("handle_tb_paste_object")
