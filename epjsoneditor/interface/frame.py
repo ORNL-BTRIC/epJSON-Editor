@@ -106,7 +106,7 @@ class EpJsonEditorFrame(wx.Frame):
     def create_toolbar(self):
         # create some toolbars
         tool_main = aui.AuiToolBar(self, -1, wx.DefaultPosition, wx.DefaultSize,
-                             agwStyle=aui.AUI_TB_TEXT)
+                                   agwStyle=aui.AUI_TB_TEXT)
         tool_main.SetToolBitmapSize(wx.Size(48, 48))
         tool_main.AddSimpleTool(10, "New", wx.ArtProvider.GetBitmap(wx.ART_NEW))
 
@@ -714,10 +714,26 @@ class EpJsonEditorFrame(wx.Frame):
         if destination_of_jump not in self.jumps[jump_string]:
             self.jumps[jump_string].append(destination_of_jump)
 
-    def handle_new_object(self, event):
+    def handle_new_object(self, _):
         print("handle_new_object")
+        all_objects_in_class = {}
+        count_of_objects = 0
+        if self.selected_object_name in self.current_file:
+            all_objects_in_class = self.current_file[self.selected_object_name]
+            count_of_objects = len(all_objects_in_class)
+        new_object = {}
+        fields_of_object = self.data_dictionary[self.selected_object_name].input_fields
+        for field_name, field_details in fields_of_object.items():
+            if 'default' in field_details:
+                new_object[field_name] = field_details['default']
+            else:
+                new_object[field_name] = ''
+        all_objects_in_class[f'new-{count_of_objects + 1}'] = new_object
+        if count_of_objects == 0:
+            self.current_file[self.selected_object_name] = all_objects_in_class
+        self.update_grid(self.selected_object_name)
 
-    def handle_duplicate_object(self, event):
+    def handle_duplicate_object(self, _):
         print("handle_duplicate_object")
         current_column = self.main_grid.GetGridCursorCol()
         object_name = self.main_grid.GetCellValue(0, current_column)
