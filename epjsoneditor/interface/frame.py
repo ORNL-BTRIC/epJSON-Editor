@@ -732,6 +732,7 @@ class EpJsonEditorFrame(wx.Frame):
         if count_of_objects == 0:
             self.current_file[self.selected_object_name] = all_objects_in_class
         self.update_grid(self.selected_object_name)
+        self.update_list_of_object_counts()
 
     def handle_duplicate_object(self, _):
         print("handle_duplicate_object")
@@ -742,12 +743,22 @@ class EpJsonEditorFrame(wx.Frame):
         duplicated_object = original_object.copy()
         all_objects_in_class[object_name + "-copy"] = duplicated_object
         self.update_grid(self.selected_object_name)
+        self.update_list_of_object_counts()
 
     def handle_tb_dup_change_object(self, event):
         print("handle_tb_dup_change_object")
 
     def handle_tb_delete_object(self, event):
         print("handle_tb_delete_object")
+        columns_selected = self.main_grid.GetSelectedCols()
+        if self.selected_object_name in self.current_file:
+            all_objects_in_class = self.current_file[self.selected_object_name]
+            for column_selected in columns_selected:
+                object_name = self.main_grid.GetCellValue(0, column_selected)
+                if object_name in all_objects_in_class:
+                    del all_objects_in_class[object_name]
+            self.update_grid(self.selected_object_name)
+            self.update_list_of_object_counts()
 
     def handle_tb_copy_object(self, event):
         print("handle_tb_copy_object")
