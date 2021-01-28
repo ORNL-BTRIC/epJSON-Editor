@@ -762,6 +762,52 @@ class EpJsonEditorFrame(wx.Frame):
 
     def handle_tb_copy_object(self, event):
         print("handle_tb_copy_object")
+        to_copy = {}
+        instances_to_copy = {}
+        columns_selected = self.main_grid.GetSelectedCols()
+        if self.selected_object_name in self.current_file:
+            all_objects_in_class = self.current_file[self.selected_object_name]
+            for column_selected in columns_selected:
+                object_name = self.main_grid.GetCellValue(0, column_selected)
+                if object_name in all_objects_in_class:
+                    instances_to_copy[object_name] = all_objects_in_class[object_name].copy()
+            to_copy[self.selected_object_name] = instances_to_copy
+            text_to_copy = json.dumps(to_copy, indent=4)
+            if wx.TheClipboard.Open():
+                wx.TheClipboard.SetData(wx.TextDataObject(text_to_copy))
+                wx.TheClipboard.Close()
 
     def handle_tb_paste_object(self, event):
         print("handle_tb_paste_object")
+        text_data = wx.TextDataObject()
+        if wx.TheClipboard.Open():
+            success = wx.TheClipboard.GetData(text_data)
+            wx.TheClipboard.Close()
+        if success:
+            text_from_clipboard = text_data.GetText()
+            try:
+                dict_from_clipboard = json.loads(text_from_clipboard)
+            except ValueError as e:
+                print("Trying to paste something that is not JSON text from clipboard")
+                print(text_from_clipboard)
+                return
+            print(dict_from_clipboard)
+            for class_name, object_instances in dict_from_clipboard.items():
+                if class_name in self.data_dictionary:
+                    self.selected_object_name = class_name
+                    if class_name in self.current_file:
+                        for object_name, fields in object_instances.items():
+                            if object_name in self.current_file[class_name]:
+                                self.current_file[class_name][object_name + "-copy"] = fields
+                            else:
+                                self.current_file[class_name][object_name] = fields
+#                        self.current_file[class_name].update(object_instances)
+                    else:
+                        self.current_file[class_name] = object_instances
+            object_list_item = self.name_to_object_list_item[self.selected_object_name]
+            self.object_list_tree.SelectItem(object_list_item)  # this triggers update_grid
+            self.update_grid(self.selected_object_name)
+            self.update_list_of_object_counts()
+
+
+
