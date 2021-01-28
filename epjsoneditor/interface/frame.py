@@ -130,8 +130,8 @@ class EpJsonEditorFrame(wx.Frame):
         tb_duplicate_object = tool_main.AddSimpleTool(17, "Dup Obj", wx.ArtProvider.GetBitmap(wx.ART_GO_FORWARD))
         self.Bind(wx.EVT_TOOL, self.handle_duplicate_object, tb_duplicate_object)
 
-        tb_dup_change_object = tool_main.AddSimpleTool(18, "Dup Obj + Chg", wx.ArtProvider.GetBitmap(wx.ART_GOTO_LAST))
-        self.Bind(wx.EVT_TOOL, self.handle_tb_dup_change_object, tb_dup_change_object)
+        # tb_dup_change_object=tool_main.AddSimpleTool(18, "Dup Obj + Chg", wx.ArtProvider.GetBitmap(wx.ART_GOTO_LAST))
+        # self.Bind(wx.EVT_TOOL, self.handle_tb_dup_change_object, tb_dup_change_object)
 
         tb_delete_object = tool_main.AddSimpleTool(19, "Del Obj", wx.ArtProvider.GetBitmap(wx.ART_MINUS))
         self.Bind(wx.EVT_TOOL, self.handle_tb_delete_object, tb_delete_object)
@@ -715,7 +715,6 @@ class EpJsonEditorFrame(wx.Frame):
             self.jumps[jump_string].append(destination_of_jump)
 
     def handle_new_object(self, _):
-        print("handle_new_object")
         all_objects_in_class = {}
         count_of_objects = 0
         if self.selected_object_name in self.current_file:
@@ -735,21 +734,18 @@ class EpJsonEditorFrame(wx.Frame):
         self.update_list_of_object_counts()
 
     def handle_duplicate_object(self, _):
-        print("handle_duplicate_object")
-        current_column = self.main_grid.GetGridCursorCol()
-        object_name = self.main_grid.GetCellValue(0, current_column)
-        all_objects_in_class = self.current_file[self.selected_object_name]
-        original_object = all_objects_in_class[object_name]
-        duplicated_object = original_object.copy()
-        all_objects_in_class[object_name + "-copy"] = duplicated_object
-        self.update_grid(self.selected_object_name)
-        self.update_list_of_object_counts()
+        columns_selected = self.main_grid.GetSelectedCols()
+        if self.selected_object_name in self.current_file:
+            all_objects_in_class = self.current_file[self.selected_object_name]
+            for column_selected in columns_selected:
+                object_name = self.main_grid.GetCellValue(0, column_selected)
+                original_object = all_objects_in_class[object_name]
+                duplicated_object = original_object.copy()
+                all_objects_in_class[object_name + "-copy"] = duplicated_object
+            self.update_grid(self.selected_object_name)
+            self.update_list_of_object_counts()
 
-    def handle_tb_dup_change_object(self, event):
-        print("handle_tb_dup_change_object")
-
-    def handle_tb_delete_object(self, event):
-        print("handle_tb_delete_object")
+    def handle_tb_delete_object(self, _):
         columns_selected = self.main_grid.GetSelectedCols()
         if self.selected_object_name in self.current_file:
             all_objects_in_class = self.current_file[self.selected_object_name]
@@ -760,8 +756,7 @@ class EpJsonEditorFrame(wx.Frame):
             self.update_grid(self.selected_object_name)
             self.update_list_of_object_counts()
 
-    def handle_tb_copy_object(self, event):
-        print("handle_tb_copy_object")
+    def handle_tb_copy_object(self, _):
         to_copy = {}
         instances_to_copy = {}
         columns_selected = self.main_grid.GetSelectedCols()
@@ -777,9 +772,9 @@ class EpJsonEditorFrame(wx.Frame):
                 wx.TheClipboard.SetData(wx.TextDataObject(text_to_copy))
                 wx.TheClipboard.Close()
 
-    def handle_tb_paste_object(self, event):
-        print("handle_tb_paste_object")
+    def handle_tb_paste_object(self, _):
         text_data = wx.TextDataObject()
+        success = False
         if wx.TheClipboard.Open():
             success = wx.TheClipboard.GetData(text_data)
             wx.TheClipboard.Close()
@@ -787,7 +782,7 @@ class EpJsonEditorFrame(wx.Frame):
             text_from_clipboard = text_data.GetText()
             try:
                 dict_from_clipboard = json.loads(text_from_clipboard)
-            except ValueError as e:
+            except ValueError as _:
                 print("Trying to paste something that is not JSON text from clipboard")
                 print(text_from_clipboard)
                 return
@@ -801,13 +796,9 @@ class EpJsonEditorFrame(wx.Frame):
                                 self.current_file[class_name][object_name + "-copy"] = fields
                             else:
                                 self.current_file[class_name][object_name] = fields
-#                        self.current_file[class_name].update(object_instances)
                     else:
                         self.current_file[class_name] = object_instances
             object_list_item = self.name_to_object_list_item[self.selected_object_name]
             self.object_list_tree.SelectItem(object_list_item)  # this triggers update_grid
             self.update_grid(self.selected_object_name)
             self.update_list_of_object_counts()
-
-
-
