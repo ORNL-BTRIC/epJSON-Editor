@@ -14,5 +14,3 @@ class EpJsonEditorApplication(wx.App):
         self.SetTopWindow(self.frame_epjsoneditor)
         self.frame_epjsoneditor.Show()
         return True
-
-

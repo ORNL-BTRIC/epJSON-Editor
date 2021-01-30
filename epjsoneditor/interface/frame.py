@@ -167,7 +167,8 @@ class EpJsonEditorFrame(wx.Frame):
         search_field = wx.ComboBox(tools_search, value='', choices=['zone', 'building', 'lighting'], size=(200, 20))
         tools_search.AddControl(search_field)
 
-        search_bar_find = tools_search.AddSimpleTool(-2, "Find", wx.ArtProvider.GetBitmap(wx.ART_FIND))
+        # search_bar_find = tools_search.AddSimpleTool(-2, "Find", wx.ArtProvider.GetBitmap(wx.ART_FIND))
+        tools_search.AddSimpleTool(-2, "Find", wx.ArtProvider.GetBitmap(wx.ART_FIND))
         tools_search.AddSpacer(20)
         tools_search.AddLabel(-3, "Match:", 30)
         match_case = wx.CheckBox(tools_search, wx.ID_ANY, "Case")
@@ -782,7 +783,7 @@ class EpJsonEditorFrame(wx.Frame):
             text_from_clipboard = text_data.GetText()
             try:
                 dict_from_clipboard = json.loads(text_from_clipboard)
-            except ValueError as _:
+            except ValueError:
                 print("Trying to paste something that is not JSON text from clipboard")
                 print(text_from_clipboard)
                 return
