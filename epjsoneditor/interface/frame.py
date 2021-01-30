@@ -636,7 +636,7 @@ class EpJsonEditorFrame(wx.Frame):
          Create the simplified version of the Energy+.schema.epJSON that
          is closer to what is needed for displaying the grid elements
         """
-        with open("c:/EnergyPlusV9-4-0/Energy+.schema.epJSON") as schema_file:
+        with open("/eplus/repos/1eplus/builds/r/Products/Energy+.schema.epJSON") as schema_file:
             ep_schema = json.load(schema_file)
             for object_name, json_properties in ep_schema["properties"].items():
                 self.data_dictionary[object_name] = SchemaInputObject(json_properties)
