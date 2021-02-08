@@ -8,6 +8,7 @@ import time
 from epjsoneditor.schemainputobject import SchemaInputObject
 from epjsoneditor.referencesfromdatadictionary import ReferencesFromDataDictionary
 from epjsoneditor.interface.settings_dialog import SettingsDialog
+from epjsoneditor.utilities.crossplatform import Platform
 
 
 class EpJsonEditorFrame(wx.Frame):
@@ -637,7 +638,16 @@ class EpJsonEditorFrame(wx.Frame):
          Create the simplified version of the Energy+.schema.epJSON that
          is closer to what is needed for displaying the grid elements
         """
-        with open("/eplus/repos/1eplus/builds/r/Products/Energy+.schema.epJSON") as schema_file:
+        current_platform = Platform.get_current_platform()
+        if current_platform == Platform.WINDOWS:
+            path_to_schema = "c:/EnergyPlusV9-4-0/Energy+.schema.epJSON"
+        elif current_platform == Platform.LINUX:
+            path_to_schema = "/eplus/repos/1eplus/builds/r/Products/Energy+.schema.epJSON"
+        elif current_platform == Platform.MAC:
+            path_to_schema = "/eplus/repos/1eplus/builds/r/Products/Energy+.schema.epJSON"
+        else:
+            path_to_schema = "/eplus/repos/1eplus/builds/r/Products/Energy+.schema.epJSON"
+        with open(path_to_schema) as schema_file:
             ep_schema = json.load(schema_file)
             for object_name, json_properties in ep_schema["properties"].items():
                 self.data_dictionary[object_name] = SchemaInputObject(json_properties)
