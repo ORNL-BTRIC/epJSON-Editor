@@ -167,7 +167,8 @@ class EpJsonEditorFrame(wx.Frame):
         search_field = wx.ComboBox(tools_search, value='', choices=['zone', 'building', 'lighting'], size=(200, 20))
         tools_search.AddControl(search_field)
 
-        search_bar_find = tools_search.AddSimpleTool(-2, "Find", wx.ArtProvider.GetBitmap(wx.ART_FIND))
+        # search_bar_find = tools_search.AddSimpleTool(-2, "Find", wx.ArtProvider.GetBitmap(wx.ART_FIND))
+        tools_search.AddSimpleTool(-2, "Find", wx.ArtProvider.GetBitmap(wx.ART_FIND))
         tools_search.AddSpacer(20)
         tools_search.AddLabel(-3, "Match:", 30)
         match_case = wx.CheckBox(tools_search, wx.ID_ANY, "Case")
@@ -636,7 +637,7 @@ class EpJsonEditorFrame(wx.Frame):
          Create the simplified version of the Energy+.schema.epJSON that
          is closer to what is needed for displaying the grid elements
         """
-        with open("c:/EnergyPlusV9-4-0/Energy+.schema.epJSON") as schema_file:
+        with open("/eplus/repos/1eplus/builds/r/Products/Energy+.schema.epJSON") as schema_file:
             ep_schema = json.load(schema_file)
             for object_name, json_properties in ep_schema["properties"].items():
                 self.data_dictionary[object_name] = SchemaInputObject(json_properties)
@@ -782,7 +783,7 @@ class EpJsonEditorFrame(wx.Frame):
             text_from_clipboard = text_data.GetText()
             try:
                 dict_from_clipboard = json.loads(text_from_clipboard)
-            except ValueError as _:
+            except ValueError:
                 print("Trying to paste something that is not JSON text from clipboard")
                 print(text_from_clipboard)
                 return

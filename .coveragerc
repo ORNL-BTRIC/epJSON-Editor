@@ -1,0 +1,12 @@
+[run]
+source =
+        epjsoneditor
+
+omit =
+        /usr/*
+        /tmp/*
+        .tox/*
+        *.pyenv*
+        *.venv*
+        */AppData/*
+        setup.py
