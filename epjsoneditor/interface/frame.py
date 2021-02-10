@@ -34,6 +34,7 @@ class EpJsonEditorFrame(wx.Frame):
         self.use_si_units = True
         self.row_fields = None
         self.column_input_object_names = None
+        self.last_editable_row_for_column = None
         self.name_to_column_number = {}
         self.field_to_row_number = {}
         self.field_name_to_display_name = {}
@@ -389,6 +390,7 @@ class EpJsonEditorFrame(wx.Frame):
         new_columns = 1
         if selected_object_name in self.current_file:
             new_columns = len(self.current_file[selected_object_name]) + 1
+        self.last_editable_row_for_column = self.determine_last_editable_row(selected_object_dict, selected_object_name, new_columns)
         self.resize_grid_rows_columns(len(self.row_fields), new_columns)
         # add field names and units
         for row_counter, row_field in enumerate(self.row_fields):
@@ -542,6 +544,11 @@ class EpJsonEditorFrame(wx.Frame):
         if "offset" in self.unit_conversions[unit_string]:
             converted_value = converted_value + self.unit_conversions[unit_string]["offset"]
         return converted_value
+
+    def determine_last_editable_row(self, object_dict, object_name, number_of_columns):
+        max_row_for_column = ['skip column zero',]
+
+        return max_row_for_column
 
     def handle_cell_left_click(self, event):
         cell_row = event.GetRow()
