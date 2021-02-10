@@ -643,8 +643,9 @@ class EpJsonEditorFrame(wx.Frame):
         """
         current_platform = Platform.get_current_platform()
         if current_platform == Platform.WINDOWS:
-#            path_to_schema = "c:/EnergyPlusV9-4-0/Energy+.schema.epJSON"
-            path_to_schema = "C:/Users/jglaz/Documents/projects/epJSON Editor/schema/2021-02-10 schema/Energy+.schema.epJSON"
+            # path_to_schema = "c:/EnergyPlusV9-4-0/Energy+.schema.epJSON"
+            path_to_schema = \
+                "C:/Users/jglaz/Documents/projects/epJSON Editor/schema/2021-02-10 schema/Energy+.schema.epJSON"
         elif current_platform == Platform.LINUX:
             path_to_schema = "/eplus/repos/1eplus/builds/r/Products/Energy+.schema.epJSON"
         elif current_platform == Platform.MAC:
@@ -654,8 +655,6 @@ class EpJsonEditorFrame(wx.Frame):
         with open(path_to_schema) as schema_file:
             ep_schema = json.load(schema_file)
             for object_name, json_properties in ep_schema["properties"].items():
-#                if object_name == 'Schedule:Compact':
-#                    print('Schedule:Compact')
                 self.data_dictionary[object_name] = SchemaInputObject(json_properties)
             references_from_data_dictionary = ReferencesFromDataDictionary(self.data_dictionary)
             self.cross_references = references_from_data_dictionary.reference_fields
@@ -821,10 +820,10 @@ class EpJsonEditorFrame(wx.Frame):
             self.update_grid(self.selected_object_name)
             self.update_list_of_object_counts()
 
-    def is_convertible_to_float(self,value):
+    @staticmethod
+    def is_convertible_to_float(value):
         try:
             float(value)
             return True
-        except:
+        except ValueError:
             return False
-
