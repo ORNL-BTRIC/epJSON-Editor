@@ -593,8 +593,9 @@ class EpJsonEditorFrame(wx.Frame):
         elif "extensible_root_field_name" in row_field:
             extensible_field_list = active_input_objects[current_input_object_name][
                 row_field["extensible_root_field_name"]]
-            extensible_field = extensible_field_list[row_field["extensible_repeat_group"]]
-            extensible_field[row_field["field_name"]] = new_cell_value
+            if row_field["extensible_repeat_group"] < len(extensible_field_list):
+                extensible_field = extensible_field_list[row_field["extensible_repeat_group"]]
+                extensible_field[row_field["field_name"]] = new_cell_value
         else:
             active_input_object[row_field['field_name']] = new_cell_value
 
@@ -826,3 +827,4 @@ class EpJsonEditorFrame(wx.Frame):
             return True
         except:
             return False
+
