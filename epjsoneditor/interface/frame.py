@@ -496,22 +496,23 @@ class EpJsonEditorFrame(wx.Frame):
     def is_value_valid(self, row_index, value):
         row_field = self.row_fields[row_index]
         if 'type' in row_field:
-            if row_field['type'] == 'number' and value != '':
-                numeric_value = float(value)
-                if 'minimum' in row_field:
-                    if 'exclusiveMinimum' in row_field:
-                        if numeric_value <= row_field['minimum']:
-                            return False
-                    else:
-                        if numeric_value < row_field['minimum']:
-                            return False
-                if 'maximum' in row_field:
-                    if 'exclusiveMaximum' in row_field:
-                        if numeric_value >= row_field['maximum']:
-                            return False
-                    else:
-                        if numeric_value > row_field['maximum']:
-                            return False
+            if (row_field['type'] == 'number' or row_field['type'] == 'number_or_string') and value != '':
+                if self.is_convertible_to_float(value):
+                    numeric_value = float(value)
+                    if 'minimum' in row_field:
+                        if 'exclusiveMinimum' in row_field:
+                            if numeric_value <= row_field['minimum']:
+                                return False
+                        else:
+                            if numeric_value < row_field['minimum']:
+                                return False
+                    if 'maximum' in row_field:
+                        if 'exclusiveMaximum' in row_field:
+                            if numeric_value >= row_field['maximum']:
+                                return False
+                        else:
+                            if numeric_value > row_field['maximum']:
+                                return False
             elif 'enum' in row_field:
                 if value not in row_field['enum']:
                     return False
@@ -526,7 +527,7 @@ class EpJsonEditorFrame(wx.Frame):
             return converted_value
         if type(value_to_convert) is float or type(value_to_convert) is int:
             if "type" in row_field:
-                if row_field["type"] == "number":
+                if row_field["type"] == "number" or row_field["type"] == "number_or_string":
                     if "units" in row_field and not self.use_si_units:
                         if "ip_unit" in row_field:
                             unit_lookup = row_field["units"] + "___" + row_field["ip_unit"]
@@ -610,7 +611,7 @@ class EpJsonEditorFrame(wx.Frame):
         choices = [str(self.main_grid.GetCellValue(cell_row, cell_column)) + " | current"]
         if 'enum' in row_field:
             for option in row_field['enum']:
-                choices.append(option + " | choice")
+                choices.append(str(option) + " | choice")
         if 'object_list' in row_field:
             for reference_list_name in row_field['object_list']:
                 if reference_list_name in self.reference_names:
@@ -640,7 +641,8 @@ class EpJsonEditorFrame(wx.Frame):
         """
         current_platform = Platform.get_current_platform()
         if current_platform == Platform.WINDOWS:
-            path_to_schema = "c:/EnergyPlusV9-4-0/Energy+.schema.epJSON"
+#            path_to_schema = "c:/EnergyPlusV9-4-0/Energy+.schema.epJSON"
+            path_to_schema = "C:/Users/jglaz/Documents/projects/epJSON Editor/schema/2021-02-10 schema/Energy+.schema.epJSON"
         elif current_platform == Platform.LINUX:
             path_to_schema = "/eplus/repos/1eplus/builds/r/Products/Energy+.schema.epJSON"
         elif current_platform == Platform.MAC:
@@ -650,6 +652,8 @@ class EpJsonEditorFrame(wx.Frame):
         with open(path_to_schema) as schema_file:
             ep_schema = json.load(schema_file)
             for object_name, json_properties in ep_schema["properties"].items():
+#                if object_name == 'Schedule:Compact':
+#                    print('Schedule:Compact')
                 self.data_dictionary[object_name] = SchemaInputObject(json_properties)
             references_from_data_dictionary = ReferencesFromDataDictionary(self.data_dictionary)
             self.cross_references = references_from_data_dictionary.reference_fields
@@ -699,7 +703,8 @@ class EpJsonEditorFrame(wx.Frame):
                 else:
                     field_name_no_underscore = input_field
                 if 'type' in field_description:
-                    if field_description['type'] == 'string' and 'enum' not in field_description:
+                    if (field_description['type'] == 'string' or field_description['type'] == 'number_or_string') \
+                            and 'enum' not in field_description:
                         for cur_name, cur_fields in object_instances.items():
                             if input_field in cur_fields:
                                 jump_string = cur_fields[input_field]
@@ -813,3 +818,10 @@ class EpJsonEditorFrame(wx.Frame):
             self.object_list_tree.SelectItem(object_list_item)  # this triggers update_grid
             self.update_grid(self.selected_object_name)
             self.update_list_of_object_counts()
+
+    def is_convertible_to_float(self,value):
+        try:
+            float(value)
+            return True
+        except:
+            return False

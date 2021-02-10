@@ -59,9 +59,33 @@ class SchemaInputObject:
                     self.add_field_name_with_spaces(json_properties, extensible_field)
                 extension_dict[extensible_field]["is_required"] = \
                     self.is_field_required(return_dict["items"], extensible_field)
+                self.fix_any_of(extension_dict[extensible_field])
             return extension_dict
         return_dict["field_name_with_spaces"] = self.add_field_name_with_spaces(json_properties, field)
+        self.fix_any_of(return_dict)
         return return_dict
+
+    def fix_any_of(self, dictionary):
+        if 'field' in dictionary:
+            print(f'field found in dictionary: {dictionary}')
+        if 'anyOf' in dictionary:
+            # print(f'anyOf found in: {field} of class {return_dict["field_name_with_spaces"]} in the form {return_dict["anyOf"]}')
+            if len(dictionary['anyOf']) == 2:
+                first_dict, second_dict = dictionary['anyOf']
+                combined_enum = []
+                if 'enum' in first_dict:
+                    combined_enum = first_dict['enum']
+                if 'enum' in second_dict:
+                    combined_enum.extend(second_dict['enum'])
+                dictionary.update(first_dict)
+                dictionary.update(second_dict)
+                if combined_enum:
+                    dictionary['enum'] = combined_enum
+                dictionary['type'] = 'number_or_string'
+                del dictionary['anyOf']
+            else:
+                print(f'while parsing schema an anyOf not of length 2 was found {dictionary["field_name_with_spaces"]}')
+
 
     @staticmethod
     def get_from_under_pattern_properties(sub_key, field):
