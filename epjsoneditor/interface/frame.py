@@ -39,6 +39,7 @@ class EpJsonEditorFrame(wx.Frame):
         self.field_to_row_number = {}
         self.field_name_to_display_name = {}
         self.jump_destination_list = None
+        self.additional_sets_of_fields = 5  # extra sets of fields for grid to display for extensible objects
         self.jumps = {}
         self.unit_conversions = {}
         self.read_unit_conversions()
@@ -147,6 +148,10 @@ class EpJsonEditorFrame(wx.Frame):
         # tool_main.AddSeparator()
         # tool_main.AddTool(22, "IP Units", wx.ArtProvider.GetBitmap(wx.ART_GO_UP), wx.NullBitmap, kind=wx.ITEM_RADIO)
         # tool_main.AddTool(23, "SI Units", wx.ArtProvider.GetBitmap(wx.ART_GO_DOWN), wx.NullBitmap, kind=wx.ITEM_RADIO)
+        tool_main.AddSeparator()
+        tb_add_fields = tool_main.AddSimpleTool(22, "Add Fields", wx.ArtProvider.GetBitmap(wx.ART_GO_DOWN))
+        self.Bind(wx.EVT_TOOL, self.handle_tb_add_fields, tb_add_fields)
+
         tool_main.AddSeparator()
         tb_settings = tool_main.AddSimpleTool(25, "Settings", wx.ArtProvider.GetBitmap(wx.ART_EXECUTABLE_FILE))
         self.Bind(wx.EVT_TOOL, self.handle_settings_toolbar_button, tb_settings)
@@ -257,6 +262,9 @@ class EpJsonEditorFrame(wx.Frame):
 
     def handle_jump_double_click(self, event):
         self.handle_jump_button(event)
+
+    def handle_tb_add_fields(self, _):
+        pass
 
     def go_to_cell(self, input_object, name_of_object, field_name):
         object_list_item = self.name_to_object_list_item[input_object]
@@ -390,7 +398,8 @@ class EpJsonEditorFrame(wx.Frame):
         new_columns = 1
         if selected_object_name in self.current_file:
             new_columns = len(self.current_file[selected_object_name]) + 1
-        self.last_editable_row_for_column = self.determine_last_editable_row(selected_object_dict, selected_object_name, new_columns)
+        self.last_editable_row_for_column = self.determine_last_editable_row(selected_object_dict, selected_object_name,
+                                                                             new_columns)
         self.resize_grid_rows_columns(len(self.row_fields), new_columns)
         # add field names and units
         for row_counter, row_field in enumerate(self.row_fields):
@@ -441,7 +450,9 @@ class EpJsonEditorFrame(wx.Frame):
             row_fields.append(current_field)
         if object_dict.extensible_size > 0:  # add extensible fields if present
             last_field_name = row_fields[-1]["field_name"]
-            repeat_extension_fields = self.maximum_repeats_of_extensible_fields(object_name, last_field_name)
+
+            repeat_extension_fields = self.maximum_repeats_of_extensible_fields(object_name, last_field_name) \
+                                      + self.additional_sets_of_fields
             row_fields.pop()  # for extensible object don't need last item
             for repeat_field_group in range(repeat_extension_fields):
                 for item in object_dict.input_fields[last_field_name]:
@@ -546,7 +557,7 @@ class EpJsonEditorFrame(wx.Frame):
         return converted_value
 
     def determine_last_editable_row(self, object_dict, object_name, number_of_columns):
-        max_row_for_column = ['skip column zero',]
+        max_row_for_column = ['skip column zero', ]
 
         return max_row_for_column
 
@@ -600,11 +611,19 @@ class EpJsonEditorFrame(wx.Frame):
         elif "extensible_root_field_name" in row_field:
             extensible_field_list = active_input_objects[current_input_object_name][
                 row_field["extensible_root_field_name"]]
-            if row_field["extensible_repeat_group"] < len(extensible_field_list):
-                extensible_field = extensible_field_list[row_field["extensible_repeat_group"]]
-                extensible_field[row_field["field_name"]] = new_cell_value
+            if row_field["extensible_repeat_group"] >= len(extensible_field_list):
+                # if editing a field beyond the length of the existing object
+                input_fields_of_object = self.data_dictionary[self.selected_object_name].input_fields
+                if row_field['extensible_root_field_name'] in input_fields_of_object:
+                    all_field_keys = input_fields_of_object[row_field['extensible_root_field_name']].keys()
+                    blank_set_fields = {k: '' for k in all_field_keys if k != 'field_name'}
+                    for i in range(len(extensible_field_list), row_field["extensible_repeat_group"] + 1):
+                        extensible_field_list.append(blank_set_fields.copy())
+            extensible_field = extensible_field_list[row_field["extensible_repeat_group"]]
+            extensible_field[row_field["field_name"]] = new_cell_value
         else:
             active_input_object[row_field['field_name']] = new_cell_value
+        print('end of set_file_value')
 
     @staticmethod
     def remove_pipe_and_after(string_with_pipe):
