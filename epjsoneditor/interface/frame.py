@@ -49,15 +49,7 @@ class EpJsonEditorFrame(wx.Frame):
 
         # notify AUI which frame to use
         self._mgr.SetManagedWindow(self)
-
-        self.object_list_tree = wx.TreeCtrl(self, style=wx.TR_HIDE_ROOT)
-        self.object_list_root = self.object_list_tree.AddRoot("All Input Objects")
-        self.object_list_tree.SetItemData(self.object_list_root, None)
-        for name_of_class in self.data_dictionary.keys():
-            child = self.object_list_tree.AppendItem(self.object_list_root, self.object_list_format(name_of_class, 0))
-            self.object_list_tree.Expand(child)
-            self.name_to_object_list_item[name_of_class] = child
-
+        self.create_list_of_objects()
         self.explanation_text = wx.TextCtrl(self, -1, "Explanation of the selected input object and field",
                                             wx.DefaultPosition, wx.Size(200, 150),
                                             wx.NO_BORDER | wx.TE_MULTILINE)
@@ -98,6 +90,33 @@ class EpJsonEditorFrame(wx.Frame):
 
         self.Bind(wx.EVT_CLOSE, self.handle_close)
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.handle_select_object_list_item, self.object_list_tree)
+
+        # select first object in list
+        all_object_names = list(self.name_to_object_list_item.keys())
+        self.object_list_tree.SelectItem(self.name_to_object_list_item[all_object_names[0]])
+
+    def create_list_of_objects(self):
+        self.object_list_tree = wx.TreeCtrl(self, style=wx.TR_HIDE_ROOT)
+        self.object_list_root = self.object_list_tree.AddRoot("All Input Objects")
+        self.object_list_tree.SetItemData(self.object_list_root, None)
+        self.object_list_show_groups = True
+        if self.object_list_show_groups:
+            current_group_name = ''
+            group_root = None
+            for name_of_class in self.data_dictionary.keys():
+                if self.data_dictionary[name_of_class].group != current_group_name:
+                    current_group_name = self.data_dictionary[name_of_class].group
+                    group_root = self.object_list_tree.AppendItem(self.object_list_root, current_group_name)
+                child = self.object_list_tree.AppendItem(group_root, self.object_list_format(name_of_class, 0))
+                self.object_list_tree.Expand(child)
+                self.name_to_object_list_item[name_of_class] = child
+                self.object_list_tree.Expand(group_root)
+        else:
+            for name_of_class in self.data_dictionary.keys():
+                child = self.object_list_tree.AppendItem(self.object_list_root, self.object_list_format(name_of_class, 0))
+                self.object_list_tree.Expand(child)
+                self.name_to_object_list_item[name_of_class] = child
+
 
     def create_grid(self):
         grid = wx.grid.Grid(self, -1, wx.Point(0, 0), wx.Size(150, 250),
@@ -314,12 +333,14 @@ class EpJsonEditorFrame(wx.Frame):
 
     def handle_select_object_list_item(self, event):
         selected_line = self.object_list_tree.GetItemText(event.GetItem())
-        self.selected_object_tree_item = event.GetItem()
-        self.selected_object_name = selected_line[7:]  # remove the bracketed number
-        self.display_explanation(self.selected_object_name)
-        self.jump_destination_list.DeleteAllItems()
-        self.update_grid(self.selected_object_name)
-        self.Refresh()
+        current_object_name = selected_line[7:]  # remove the bracketed number
+        if current_object_name in self.name_to_object_list_item:
+            self.selected_object_tree_item = event.GetItem()
+            self.selected_object_name = current_object_name
+            self.display_explanation(self.selected_object_name)
+            self.jump_destination_list.DeleteAllItems()
+            self.update_grid(self.selected_object_name)
+            self.Refresh()
 
     def update_list_of_object_counts(self):
         # first make all items grey
@@ -611,7 +632,6 @@ class EpJsonEditorFrame(wx.Frame):
             extensible_field[row_field["field_name"]] = new_cell_value
         else:
             active_input_object[row_field['field_name']] = new_cell_value
-        print('end of set_file_value')
 
     @staticmethod
     def remove_pipe_and_after(string_with_pipe):

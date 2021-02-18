@@ -6,6 +6,9 @@ class SchemaInputObject:
         if "memo" in json_properties:
             self.memo = json_properties["memo"]
 
+        if "group" in json_properties:
+            self.group = json_properties["group"]
+
         self.is_required = False
         if "minProperties" in json_properties:
             if json_properties["minProperties"] == 1:
