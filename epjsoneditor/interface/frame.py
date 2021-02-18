@@ -34,7 +34,6 @@ class EpJsonEditorFrame(wx.Frame):
         self.use_si_units = True
         self.row_fields = None
         self.column_input_object_names = None
-        self.last_editable_row_for_column = None
         self.name_to_column_number = {}
         self.field_to_row_number = {}
         self.field_name_to_display_name = {}
@@ -148,9 +147,6 @@ class EpJsonEditorFrame(wx.Frame):
         # tool_main.AddSeparator()
         # tool_main.AddTool(22, "IP Units", wx.ArtProvider.GetBitmap(wx.ART_GO_UP), wx.NullBitmap, kind=wx.ITEM_RADIO)
         # tool_main.AddTool(23, "SI Units", wx.ArtProvider.GetBitmap(wx.ART_GO_DOWN), wx.NullBitmap, kind=wx.ITEM_RADIO)
-        tool_main.AddSeparator()
-        tb_add_fields = tool_main.AddSimpleTool(22, "Add Fields", wx.ArtProvider.GetBitmap(wx.ART_GO_DOWN))
-        self.Bind(wx.EVT_TOOL, self.handle_tb_add_fields, tb_add_fields)
 
         tool_main.AddSeparator()
         tb_settings = tool_main.AddSimpleTool(25, "Settings", wx.ArtProvider.GetBitmap(wx.ART_EXECUTABLE_FILE))
@@ -262,9 +258,6 @@ class EpJsonEditorFrame(wx.Frame):
 
     def handle_jump_double_click(self, event):
         self.handle_jump_button(event)
-
-    def handle_tb_add_fields(self, _):
-        pass
 
     def go_to_cell(self, input_object, name_of_object, field_name):
         object_list_item = self.name_to_object_list_item[input_object]
@@ -398,8 +391,6 @@ class EpJsonEditorFrame(wx.Frame):
         new_columns = 1
         if selected_object_name in self.current_file:
             new_columns = len(self.current_file[selected_object_name]) + 1
-        self.last_editable_row_for_column = self.determine_last_editable_row(selected_object_dict, selected_object_name,
-                                                                             new_columns)
         self.resize_grid_rows_columns(len(self.row_fields), new_columns)
         # add field names and units
         for row_counter, row_field in enumerate(self.row_fields):
@@ -451,8 +442,8 @@ class EpJsonEditorFrame(wx.Frame):
         if object_dict.extensible_size > 0:  # add extensible fields if present
             last_field_name = row_fields[-1]["field_name"]
 
-            repeat_extension_fields = self.maximum_repeats_of_extensible_fields(object_name, last_field_name) \
-                                      + self.additional_sets_of_fields
+            repeat_extension_fields = self.maximum_repeats_of_extensible_fields(object_name, last_field_name) + self.\
+                additional_sets_of_fields
             row_fields.pop()  # for extensible object don't need last item
             for repeat_field_group in range(repeat_extension_fields):
                 for item in object_dict.input_fields[last_field_name]:
@@ -555,11 +546,6 @@ class EpJsonEditorFrame(wx.Frame):
         if "offset" in self.unit_conversions[unit_string]:
             converted_value = converted_value + self.unit_conversions[unit_string]["offset"]
         return converted_value
-
-    def determine_last_editable_row(self, object_dict, object_name, number_of_columns):
-        max_row_for_column = ['skip column zero', ]
-
-        return max_row_for_column
 
     def handle_cell_left_click(self, event):
         cell_row = event.GetRow()

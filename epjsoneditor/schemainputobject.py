@@ -86,7 +86,6 @@ class SchemaInputObject:
             else:
                 print(f'while parsing schema an anyOf not of length 2 was found {dictionary["field_name_with_spaces"]}')
 
-
     @staticmethod
     def get_from_under_pattern_properties(sub_key, field):
         """
