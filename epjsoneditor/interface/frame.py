@@ -38,7 +38,7 @@ class EpJsonEditorFrame(wx.Frame):
         self.field_to_row_number = {}
         self.field_name_to_display_name = {}
         self.jump_destination_list = None
-        self.additional_sets_of_fields = 5  # extra sets of fields for grid to display for extensible objects
+        self.additional_sets_of_fields = 3  # extra sets of fields for grid to display for extensible objects
         self.jumps = {}
         self.unit_conversions = {}
         self.read_unit_conversions()
@@ -605,6 +605,8 @@ class EpJsonEditorFrame(wx.Frame):
                     blank_set_fields = {k: '' for k in all_field_keys if k != 'field_name'}
                     for i in range(len(extensible_field_list), row_field["extensible_repeat_group"] + 1):
                         extensible_field_list.append(blank_set_fields.copy())
+                    # show the new lines added
+                    self.update_grid(self.selected_object_name)
             extensible_field = extensible_field_list[row_field["extensible_repeat_group"]]
             extensible_field[row_field["field_name"]] = new_cell_value
         else:
