@@ -24,7 +24,7 @@ class LocateSchema:
         self.schema_path = ""
         return ""
 
-    def search_up_tree(self,file_sought):
+    def search_up_tree(self, file_sought):
         # first search from the current working directory and up directory tree
         possible_dir = os.getcwd()
         possible_path = os.path.join(possible_dir, file_sought)
@@ -61,14 +61,3 @@ class LocateSchema:
                     if possible_directories[0]:
                         self.schema_path = possible_directories[0]
                         return possible_directories[0]
-
-# OLD CODE WITH HARD PATHS
-#        current_platform = Platform.get_current_platform()
-#        if current_platform == Platform.WINDOWS:
-#            path_to_schema = "C:/Users/jglaz/Documents/projects/epJSON Editor/schema/2021-02-10 schema/Energy+.schema.epJSON"
-#        elif current_platform == Platform.LINUX:
-#            path_to_schema = "/eplus/repos/1eplus/builds/r/Products/Energy+.schema.epJSON"
-#        elif current_platform == Platform.MAC:
-#            path_to_schema = "/eplus/repos/1eplus/builds/r/Products/Energy+.schema.epJSON"
-#        else:
-#            path_to_schema = "/eplus/repos/1eplus/builds/r/Products/Energy+.schema.epJSON"
