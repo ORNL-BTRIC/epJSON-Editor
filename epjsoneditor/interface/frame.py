@@ -8,7 +8,7 @@ import time
 from epjsoneditor.schemainputobject import SchemaInputObject
 from epjsoneditor.referencesfromdatadictionary import ReferencesFromDataDictionary
 from epjsoneditor.interface.settings_dialog import SettingsDialog
-from epjsoneditor.utilities.crossplatform import Platform
+from epjsoneditor.utilities.locate_schema import LocateSchema
 
 
 class EpJsonEditorFrame(wx.Frame):
@@ -39,6 +39,7 @@ class EpJsonEditorFrame(wx.Frame):
         self.field_name_to_display_name = {}
         self.jump_destination_list = None
         self.additional_sets_of_fields = 3  # extra sets of fields for grid to display for extensible objects
+        self.object_list_show_groups = True
         self.jumps = {}
         self.unit_conversions = {}
         self.read_unit_conversions()
@@ -113,10 +114,10 @@ class EpJsonEditorFrame(wx.Frame):
                 self.object_list_tree.Expand(group_root)
         else:
             for name_of_class in self.data_dictionary.keys():
-                child = self.object_list_tree.AppendItem(self.object_list_root, self.object_list_format(name_of_class, 0))
+                child = self.object_list_tree.AppendItem(self.object_list_root, self.object_list_format(name_of_class,
+                                                                                                        0))
                 self.object_list_tree.Expand(child)
                 self.name_to_object_list_item[name_of_class] = child
-
 
     def create_grid(self):
         grid = wx.grid.Grid(self, -1, wx.Point(0, 0), wx.Size(150, 250),
@@ -675,23 +676,18 @@ class EpJsonEditorFrame(wx.Frame):
          Create the simplified version of the Energy+.schema.epJSON that
          is closer to what is needed for displaying the grid elements
         """
-        current_platform = Platform.get_current_platform()
-        if current_platform == Platform.WINDOWS:
-            # path_to_schema = "c:/EnergyPlusV9-4-0/Energy+.schema.epJSON"
-            path_to_schema = \
-                "C:/Users/jglaz/Documents/projects/epJSON Editor/schema/2021-02-10 schema/Energy+.schema.epJSON"
-        elif current_platform == Platform.LINUX:
-            path_to_schema = "/eplus/repos/1eplus/builds/r/Products/Energy+.schema.epJSON"
-        elif current_platform == Platform.MAC:
-            path_to_schema = "/eplus/repos/1eplus/builds/r/Products/Energy+.schema.epJSON"
+        locate_schema = LocateSchema()
+        path_to_schema = locate_schema.get_schema_path()
+        print(f"Schema found: {path_to_schema}")
+        if path_to_schema:
+            with open(path_to_schema) as schema_file:
+                ep_schema = json.load(schema_file)
+                for object_name, json_properties in ep_schema["properties"].items():
+                    self.data_dictionary[object_name] = SchemaInputObject(json_properties)
+                references_from_data_dictionary = ReferencesFromDataDictionary(self.data_dictionary)
+                self.cross_references = references_from_data_dictionary.reference_fields
         else:
-            path_to_schema = "/eplus/repos/1eplus/builds/r/Products/Energy+.schema.epJSON"
-        with open(path_to_schema) as schema_file:
-            ep_schema = json.load(schema_file)
-            for object_name, json_properties in ep_schema["properties"].items():
-                self.data_dictionary[object_name] = SchemaInputObject(json_properties)
-            references_from_data_dictionary = ReferencesFromDataDictionary(self.data_dictionary)
-            self.cross_references = references_from_data_dictionary.reference_fields
+            print("No Energy+.schema.epJSON file found.")
 
     def read_unit_conversions(self):
         """
