@@ -44,6 +44,7 @@ class EpJsonEditorFrame(wx.Frame):
         self.unit_conversions = {}
         self.read_unit_conversions()
         self.current_file = {}
+        self.changes_not_saved = False
         self.create_gui()
 
     def create_gui(self):
@@ -291,13 +292,20 @@ class EpJsonEditorFrame(wx.Frame):
     def load_current_file(self, path_name):
         if os.path.exists(path_name):
             self.current_file_path = path_name
-            self.SetTitle(f"epJSON Editor - {path_name}")
             with open(path_name) as input_file:
                 self.current_file = json.load(input_file)
                 self.gather_active_references()
                 self.update_list_of_object_counts()
                 self.update_dict_of_jumps()
+            self.update_title()
             self.Refresh()
+
+    def update_title(self):
+        if os.path.exists(self.current_file_path):
+            if self.changes_not_saved:
+                self.SetTitle(f"epJSON Editor - {self.current_file_path} *")
+            else:
+                self.SetTitle(f"epJSON Editor - {self.current_file_path}")
 
     def handle_save_file(self, _):
         try:
@@ -322,12 +330,19 @@ class EpJsonEditorFrame(wx.Frame):
 
     def save_current_file(self, path_name):
         self.current_file_path = path_name
-        self.SetTitle(f"epJSON Editor - {path_name}")
+        self.changes_not_saved = False
+        self.update_title()
         with open(path_name, 'w') as output_file:
             json.dump(self.current_file, output_file, indent=4)
         self.Refresh()
 
     def handle_close(self, event):
+        if event.CanVeto() and self.changes_not_saved:
+            if wx.MessageBox("The file has not been saved... continue closing?",
+                             "Please confirm",
+                             wx.ICON_QUESTION | wx.YES_NO) != wx.YES:
+                event.Veto()
+                return
         # de-initialize the frame manager
         self._mgr.UnInit()
         event.Skip()
@@ -601,6 +616,8 @@ class EpJsonEditorFrame(wx.Frame):
               f"{original_string == changed_string}")
         if original_string != changed_string:
             self.set_file_value(cell_row, cell_column, changed_string)
+            self.changes_not_saved = True
+            self.update_title()
         self.main_grid.SetCellValue(cell_row, cell_column, changed_string)
         if self.is_value_valid(cell_row, changed_string):
             self.main_grid.SetCellBackgroundColour(cell_row, cell_column, "white")
