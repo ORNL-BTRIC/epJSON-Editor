@@ -175,8 +175,6 @@ class EpJsonEditorFrame(wx.Frame):
         tb_help = tool_main.AddSimpleTool(26, "Help", wx.ArtProvider.GetBitmap(wx.ART_HELP))
         tool_main.SetToolDropDown(26, True)
         self.Bind(wx.EVT_TOOL, self.handle_tb_help_menu, tb_help)
-        #tb_help = tool_main.AddTool(26, "Help", wx.ArtProvider.GetBitmap(wx.ART_HELP),
-        #                            wx.ArtProvider.GetBitmap(wx.ART_HELP), kind=wx.ITEM_DROPDOWN)
         tool_main.Realize()
         self._mgr.AddPane(tool_main, aui.AuiPaneInfo().Name("tool_main").Caption("Primary Toolbar").
                           ToolbarPane().Top())
