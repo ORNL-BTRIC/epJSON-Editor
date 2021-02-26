@@ -45,6 +45,9 @@ class EpJsonEditorFrame(wx.Frame):
         self.read_unit_conversions()
         self.current_file = {}
         self.changes_not_saved = False
+        self.search_field = None
+        self.search_jump_notebook = None
+        self.search_panel = None
         self.create_gui()
 
     def create_gui(self):
@@ -72,8 +75,8 @@ class EpJsonEditorFrame(wx.Frame):
         self._mgr.AddPane(self.main_grid, aui.AuiPaneInfo().Name("grid_content").
                           CenterPane().Hide().MinimizeButton(True))
 
-        search_panel = self.create_jump_search_pane()
-        self._mgr.AddPane(search_panel, aui.AuiPaneInfo().Bottom().Name("bottom_search").Caption("Jump and Search")
+        self.search_panel = self.create_jump_search_pane()
+        self._mgr.AddPane(self.search_panel, aui.AuiPaneInfo().Bottom().Name("bottom_search").Caption("Jump and Search")
                           .MinSize(150, 150))
 
         # Layer(2) allows it to take all of left side
@@ -190,11 +193,16 @@ class EpJsonEditorFrame(wx.Frame):
         tools_search.SetToolBitmapSize(wx.Size(24, 24))
 
         tools_search.AddLabel(-1, "Find:", 25)
-        search_field = wx.ComboBox(tools_search, value='', choices=['zone', 'building', 'lighting'], size=(200, 20))
-        tools_search.AddControl(search_field)
+        self.search_field = wx.ComboBox(tools_search, value='', choices=['zone', 'building', 'lighting'],
+                                        size=(200, 20), style=wx.CB_DROPDOWN | wx.TE_PROCESS_ENTER)
+
+        tools_search.AddControl(self.search_field)
+        self.Bind(wx.EVT_COMBOBOX, self.handle_find_button, self.search_field)
+        self.Bind(wx.EVT_TEXT_ENTER, self.handle_find_button, self.search_field)
 
         # search_bar_find = tools_search.AddSimpleTool(-2, "Find", wx.ArtProvider.GetBitmap(wx.ART_FIND))
-        tools_search.AddSimpleTool(-2, "Find", wx.ArtProvider.GetBitmap(wx.ART_FIND))
+        find_button = tools_search.AddSimpleTool(-2, "Find", wx.ArtProvider.GetBitmap(wx.ART_FIND))
+        self.Bind(wx.EVT_TOOL, self.handle_find_button, find_button)
         tools_search.AddSpacer(20)
         tools_search.AddLabel(-3, "Match:", 30)
         match_case = wx.CheckBox(tools_search, wx.ID_ANY, "Case")
@@ -222,31 +230,34 @@ class EpJsonEditorFrame(wx.Frame):
         tools_search.Realize()
         search_sizer.Add(tools_search, 0, flag=wx.TOP)
 
-        notebook = aui.AuiNotebook(search_panel)
+        self.search_jump_notebook = aui.AuiNotebook(search_panel)
 
         self.jump_destination_list = wx.ListCtrl(search_panel, -1, style=wx.LC_REPORT)
-        self.jump_destination_list.AppendColumn('Name', width=200)
         self.jump_destination_list.AppendColumn('Object', width=200)
+        self.jump_destination_list.AppendColumn('Class', width=200)
         self.jump_destination_list.AppendColumn('Field', width=200)
         self.jump_destination_list.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.handle_jump_double_click)
 
-        notebook.AddPage(self.jump_destination_list, "Jump")
+        self.search_jump_notebook.AddPage(self.jump_destination_list, "Jump")
 
-        search_results = wx.ListCtrl(search_panel, -1, style=wx.LC_REPORT)
-        search_results.AppendColumn('Found Item', width=100)
-        search_results.AppendColumn('Type', width=80)
-        search_results.AppendColumn('Class', width=80)
-        search_results.AppendColumn('Object', width=80)
-        search_results.AppendColumn('Field', width=80)
-        search_results.Append(("a", "base"))
-        search_results.Append(("b", "base"))
-        search_results.Append(("c", "base"))
-        search_results.Append(("d", "plate"))
-        notebook.AddPage(search_results, "Search: <text>")
-
-        search_sizer.Add(notebook, 1, flag=wx.EXPAND)
+        search_sizer.Add(self.search_jump_notebook, 1, flag=wx.EXPAND)
         search_panel.SetSizer(search_sizer)
         return search_panel
+
+    def handle_find_button(self, _):
+        search_term = self.search_field.GetValue()
+        if search_term:
+            search_results = wx.ListCtrl(self.search_panel, -1, style=wx.LC_REPORT)
+            search_results.AppendColumn('Found Item', width=100)
+            search_results.AppendColumn('Type', width=80)
+            search_results.AppendColumn('Class', width=80)
+            search_results.AppendColumn('Object', width=80)
+            search_results.AppendColumn('Field', width=80)
+            search_results.Append(("a", "base"))
+            search_results.Append(("b", "base"))
+            search_results.Append(("c", "base"))
+            search_results.Append(("d", "plate"))
+            self.search_jump_notebook.AddPage(search_results, f"Search: {search_term}")
 
     def handle_open_file(self, _):
         with wx.FileDialog(self, "Open EnergyPlus epJSON file", wildcard="epJSON files (*.epJSON)|*.epJSON",
@@ -869,13 +880,13 @@ class EpJsonEditorFrame(wx.Frame):
             self.update_grid(self.selected_object_name)
             self.update_list_of_object_counts()
 
-    def handle_tb_help_menu(self, event):
+    def handle_tb_help_menu(self, _):
         help_menu = wx.Menu()
         tb_help_about = help_menu.Append(wx.NewId(), "About")
         self.Bind(wx.EVT_MENU, self.handle_tb_help_about, tb_help_about)
         self.PopupMenu(help_menu)
 
-    def handle_tb_help_about(self, event):
+    def handle_tb_help_about(self, _):
         print('tb help about')
         text = """
 epJSON Editor
