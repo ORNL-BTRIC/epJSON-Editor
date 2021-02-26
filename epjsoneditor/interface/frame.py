@@ -268,8 +268,8 @@ class EpJsonEditorFrame(wx.Frame):
                 search_results.AppendColumn('Field', width=80)
                 classes_found = self.find_class(search_term, self.match_case.IsChecked(),
                                                 self.match_entire_field.IsChecked())
-
-                search_results.Append(("a", "base"))
+                for class_found in classes_found:
+                    search_results.Append((class_found, "Class Names"))
                 search_results.Append(("b", "base"))
                 search_results.Append(("c", "base"))
                 search_results.Append(("d", "plate"))
@@ -279,14 +279,14 @@ class EpJsonEditorFrame(wx.Frame):
         names_of_classes = list(self.data_dictionary.keys())
         if entire_field:
             if case_match:
-                found_classes = [s for s in names_of_classes if find_text.upper() == s.upper()]
-            else:
                 found_classes = [s for s in names_of_classes if find_text == s]
+            else:
+                found_classes = [s for s in names_of_classes if find_text.upper() == s.upper()]
         else:
             if case_match:
-                found_classes = [s for s in names_of_classes if find_text.upper() in s.upper()]
-            else:
                 found_classes = [s for s in names_of_classes if find_text in s]
+            else:
+                found_classes = [s for s in names_of_classes if find_text.upper() in s.upper()]
         return found_classes
 
     def handle_open_file(self, _):
