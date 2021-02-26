@@ -45,9 +45,13 @@ class EpJsonEditorFrame(wx.Frame):
         self.read_unit_conversions()
         self.current_file = {}
         self.changes_not_saved = False
+        # search related
         self.search_field = None
         self.search_jump_notebook = None
         self.search_panel = None
+        self.match_case = None
+        self.match_entire_field = None
+        self.match_node_names_only = None
         self.create_gui()
 
     def create_gui(self):
@@ -205,12 +209,12 @@ class EpJsonEditorFrame(wx.Frame):
         self.Bind(wx.EVT_TOOL, self.handle_find_button, find_button)
         tools_search.AddSpacer(20)
         tools_search.AddLabel(-3, "Match:", 30)
-        match_case = wx.CheckBox(tools_search, wx.ID_ANY, "Case")
-        tools_search.AddControl(match_case)
-        match_entire_field = wx.CheckBox(tools_search, wx.ID_ANY, "Entire Field")
-        tools_search.AddControl(match_entire_field)
-        match_node_names_only = wx.CheckBox(tools_search, wx.ID_ANY, "Nodes Only")
-        tools_search.AddControl(match_node_names_only)
+        self.match_case = wx.CheckBox(tools_search, wx.ID_ANY, "Case")
+        tools_search.AddControl(self.match_case)
+        self.match_entire_field = wx.CheckBox(tools_search, wx.ID_ANY, "Entire Field")
+        tools_search.AddControl(self.match_entire_field)
+        self.match_node_names_only = wx.CheckBox(tools_search, wx.ID_ANY, "Nodes Only")
+        tools_search.AddControl(self.match_node_names_only)
         #        tools_search.AddSpacer(20)
         #        search_previous = tools_search.AddSimpleTool(-7, "Find", wx.ArtProvider.GetBitmap(wx.ART_GO_BACK))
         #        search_next = tools_search.AddSimpleTool(-8, "Find", wx.ArtProvider.GetBitmap(wx.ART_GO_FORWARD))
@@ -247,17 +251,43 @@ class EpJsonEditorFrame(wx.Frame):
     def handle_find_button(self, _):
         search_term = self.search_field.GetValue()
         if search_term:
-            search_results = wx.ListCtrl(self.search_panel, -1, style=wx.LC_REPORT)
-            search_results.AppendColumn('Found Item', width=100)
-            search_results.AppendColumn('Type', width=80)
-            search_results.AppendColumn('Class', width=80)
-            search_results.AppendColumn('Object', width=80)
-            search_results.AppendColumn('Field', width=80)
-            search_results.Append(("a", "base"))
-            search_results.Append(("b", "base"))
-            search_results.Append(("c", "base"))
-            search_results.Append(("d", "plate"))
-            self.search_jump_notebook.AddPage(search_results, f"Search: {search_term}")
+            # check if the search term has already been used
+            new_page_label = f"Search: {search_term}"
+            found = False
+            for page_index in range(0, self.search_jump_notebook.GetPageCount()):
+                page_label = self.search_jump_notebook.GetPageText(page_index)
+                if new_page_label == page_label:
+                    self.search_jump_notebook.SetSelection(page_index)
+                    found = True
+            if not found:
+                search_results = wx.ListCtrl(self.search_panel, -1, style=wx.LC_REPORT)
+                search_results.AppendColumn('Found Item', width=100)
+                search_results.AppendColumn('Type', width=80)
+                search_results.AppendColumn('Class', width=80)
+                search_results.AppendColumn('Object', width=80)
+                search_results.AppendColumn('Field', width=80)
+                classes_found = self.find_class(search_term, self.match_case.IsChecked(),
+                                                self.match_entire_field.IsChecked())
+
+                search_results.Append(("a", "base"))
+                search_results.Append(("b", "base"))
+                search_results.Append(("c", "base"))
+                search_results.Append(("d", "plate"))
+                self.search_jump_notebook.AddPage(search_results, new_page_label, select=True)
+
+    def find_class(self, find_text, case_match, entire_field):
+        names_of_classes = list(self.data_dictionary.keys())
+        if entire_field:
+            if case_match:
+                found_classes = [s for s in names_of_classes if find_text.upper() == s.upper()]
+            else:
+                found_classes = [s for s in names_of_classes if find_text == s]
+        else:
+            if case_match:
+                found_classes = [s for s in names_of_classes if find_text.upper() in s.upper()]
+            else:
+                found_classes = [s for s in names_of_classes if find_text in s]
+        return found_classes
 
     def handle_open_file(self, _):
         with wx.FileDialog(self, "Open EnergyPlus epJSON file", wildcard="epJSON files (*.epJSON)|*.epJSON",
