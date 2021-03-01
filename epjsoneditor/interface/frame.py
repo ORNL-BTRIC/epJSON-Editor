@@ -49,9 +49,9 @@ class EpJsonEditorFrame(wx.Frame):
         self.search_field = None
         self.search_jump_notebook = None
         self.search_panel = None
-        self.match_case = None
-        self.match_entire_field = None
-        self.match_node_names_only = None
+        # self.match_case = None
+        # self.match_entire_field = None
+        # self.match_node_names_only = None
         self.create_gui()
 
     def create_gui(self):
@@ -207,14 +207,14 @@ class EpJsonEditorFrame(wx.Frame):
         # search_bar_find = tools_search.AddSimpleTool(-2, "Find", wx.ArtProvider.GetBitmap(wx.ART_FIND))
         find_button = tools_search.AddSimpleTool(-2, "Find", wx.ArtProvider.GetBitmap(wx.ART_FIND))
         self.Bind(wx.EVT_TOOL, self.handle_find_button, find_button)
-        tools_search.AddSpacer(20)
-        tools_search.AddLabel(-3, "Match:", 30)
-        self.match_case = wx.CheckBox(tools_search, wx.ID_ANY, "Case")
-        tools_search.AddControl(self.match_case)
-        self.match_entire_field = wx.CheckBox(tools_search, wx.ID_ANY, "Entire Field")
-        tools_search.AddControl(self.match_entire_field)
-        self.match_node_names_only = wx.CheckBox(tools_search, wx.ID_ANY, "Nodes Only")
-        tools_search.AddControl(self.match_node_names_only)
+        # tools_search.AddSpacer(20)
+        # tools_search.AddLabel(-3, "Match:", 30)
+        # self.match_case = wx.CheckBox(tools_search, wx.ID_ANY, "Case")
+        # tools_search.AddControl(self.match_case)
+        # self.match_entire_field = wx.CheckBox(tools_search, wx.ID_ANY, "Entire Field")
+        # tools_search.AddControl(self.match_entire_field)
+        # self.match_node_names_only = wx.CheckBox(tools_search, wx.ID_ANY, "Nodes Only")
+        # tools_search.AddControl(self.match_node_names_only)
         #        tools_search.AddSpacer(20)
         #        search_previous = tools_search.AddSimpleTool(-7, "Find", wx.ArtProvider.GetBitmap(wx.ART_GO_BACK))
         #        search_next = tools_search.AddSimpleTool(-8, "Find", wx.ArtProvider.GetBitmap(wx.ART_GO_FORWARD))
@@ -222,14 +222,14 @@ class EpJsonEditorFrame(wx.Frame):
         jump_button = wx.Button(tools_search, id=wx.ID_ANY, label="Jump", size=(60, 20))
         jump_button.Bind(wx.EVT_BUTTON, self.handle_jump_button)
         tools_search.AddControl(jump_button)
-        #tools_search.AddSpacer(20)
-        #tools_search.AddLabel(-1, "Replace:", 40)
-        #replace_field = wx.ComboBox(tools_search, value='', choices=['zone', 'building', 'lighting'], size=(200, 20))
-        #tools_search.AddControl(replace_field)
-        #replace_single_button = wx.Button(tools_search, id=wx.ID_ANY, label="Single", size=(50, 20))
-        #tools_search.AddControl(replace_single_button)
-        #replace_all_button = wx.Button(tools_search, id=wx.ID_ANY, label="All", size=(50, 20))
-        #tools_search.AddControl(replace_all_button)
+        # tools_search.AddSpacer(20)
+        # tools_search.AddLabel(-1, "Replace:", 40)
+        # replace_field = wx.ComboBox(tools_search, value='', choices=['zone', 'building', 'lighting'], size=(200, 20))
+        # tools_search.AddControl(replace_field)
+        # replace_single_button = wx.Button(tools_search, id=wx.ID_ANY, label="Single", size=(50, 20))
+        # tools_search.AddControl(replace_single_button)
+        # replace_all_button = wx.Button(tools_search, id=wx.ID_ANY, label="All", size=(50, 20))
+        # tools_search.AddControl(replace_all_button)
 
         tools_search.Realize()
         search_sizer.Add(tools_search, 0, flag=wx.TOP)
@@ -266,12 +266,10 @@ class EpJsonEditorFrame(wx.Frame):
                 search_results.AppendColumn('Class', width=80)
                 search_results.AppendColumn('Object', width=80)
                 search_results.AppendColumn('Field', width=80)
-                classes_found = self.find_class(search_term, self.match_case.IsChecked(),
-                                                self.match_entire_field.IsChecked())
+                classes_found = self.find_class(search_term)
                 for class_found in classes_found:
                     search_results.Append((class_found, "Class Names"))
-                field_names_found = self.find_field_names(search_term, self.match_case.IsChecked(),
-                                                          self.match_entire_field.IsChecked())
+                field_names_found = self.find_field_names(search_term)
                 for (field_name_found, class_found) in field_names_found:
                     search_results.Append((field_name_found, "Field Names", class_found))
                 search_results.Append(("b", "base"))
@@ -279,21 +277,12 @@ class EpJsonEditorFrame(wx.Frame):
                 search_results.Append(("d", "plate"))
                 self.search_jump_notebook.AddPage(search_results, new_page_label, select=True)
 
-    def find_class(self, find_text, case_match, entire_field):
+    def find_class(self, find_text):
         names_of_classes = list(self.data_dictionary.keys())
-        if entire_field:
-            if case_match:
-                found_classes = [s for s in names_of_classes if find_text == s]
-            else:
-                found_classes = [s for s in names_of_classes if find_text.upper() == s.upper()]
-        else:
-            if case_match:
-                found_classes = [s for s in names_of_classes if find_text in s]
-            else:
-                found_classes = [s for s in names_of_classes if find_text.upper() in s.upper()]
+        found_classes = [s for s in names_of_classes if find_text.upper() in s.upper()]
         return found_classes
 
-    def find_field_names(self, find_text, case_match, entire_field):
+    def find_field_names(self, find_text):
         found_field_names = []
         for class_name, schema_object in self.data_dictionary.items():
             for field_name, field_details in schema_object.input_fields.items():
@@ -301,20 +290,8 @@ class EpJsonEditorFrame(wx.Frame):
                     search_in_field = field_details['field_name_with_spaces']
                 else:
                     search_in_field = field_name
-                if entire_field:
-                    if case_match:
-                        if find_text == search_in_field:
-                            found_field_names.append((search_in_field, class_name))
-                    else:
-                        if find_text.upper() == search_in_field.upper():
-                            found_field_names.append((search_in_field, class_name))
-                else:
-                    if case_match:
-                        if find_text in search_in_field:
-                            found_field_names.append((search_in_field, class_name))
-                    else:
-                        if find_text.upper() in search_in_field.upper():
-                            found_field_names.append((search_in_field, class_name))
+                if find_text.upper() in search_in_field.upper():
+                    found_field_names.append((search_in_field, class_name))
         return found_field_names
 
     def handle_open_file(self, _):
