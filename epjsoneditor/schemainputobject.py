@@ -34,6 +34,7 @@ class SchemaInputObject:
                 fields_in_order = json_properties["legacy_idd"]["fields"]
             if "extension" in json_properties["legacy_idd"]:
                 extensible_fields.append(json_properties["legacy_idd"]["extension"])
+                self.extension = json_properties["legacy_idd"]["extension"]
         self.input_fields = {}  # note Python 3.7 and later preserve insertion order for dictionaries.
         for field in fields_in_order:
             self.input_fields[field] = self.get_input_field(field, json_properties, False)

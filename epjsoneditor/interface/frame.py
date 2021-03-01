@@ -49,9 +49,6 @@ class EpJsonEditorFrame(wx.Frame):
         self.search_field = None
         self.search_jump_notebook = None
         self.search_panel = None
-        # self.match_case = None
-        # self.match_entire_field = None
-        # self.match_node_names_only = None
         self.create_gui()
 
     def create_gui(self):
@@ -204,20 +201,8 @@ class EpJsonEditorFrame(wx.Frame):
         self.Bind(wx.EVT_COMBOBOX, self.handle_find_button, self.search_field)
         self.Bind(wx.EVT_TEXT_ENTER, self.handle_find_button, self.search_field)
 
-        # search_bar_find = tools_search.AddSimpleTool(-2, "Find", wx.ArtProvider.GetBitmap(wx.ART_FIND))
         find_button = tools_search.AddSimpleTool(-2, "Find", wx.ArtProvider.GetBitmap(wx.ART_FIND))
         self.Bind(wx.EVT_TOOL, self.handle_find_button, find_button)
-        # tools_search.AddSpacer(20)
-        # tools_search.AddLabel(-3, "Match:", 30)
-        # self.match_case = wx.CheckBox(tools_search, wx.ID_ANY, "Case")
-        # tools_search.AddControl(self.match_case)
-        # self.match_entire_field = wx.CheckBox(tools_search, wx.ID_ANY, "Entire Field")
-        # tools_search.AddControl(self.match_entire_field)
-        # self.match_node_names_only = wx.CheckBox(tools_search, wx.ID_ANY, "Nodes Only")
-        # tools_search.AddControl(self.match_node_names_only)
-        #        tools_search.AddSpacer(20)
-        #        search_previous = tools_search.AddSimpleTool(-7, "Find", wx.ArtProvider.GetBitmap(wx.ART_GO_BACK))
-        #        search_next = tools_search.AddSimpleTool(-8, "Find", wx.ArtProvider.GetBitmap(wx.ART_GO_FORWARD))
         tools_search.AddSpacer(20)
         jump_button = wx.Button(tools_search, id=wx.ID_ANY, label="Jump", size=(60, 20))
         jump_button.Bind(wx.EVT_BUTTON, self.handle_jump_button)
@@ -272,9 +257,10 @@ class EpJsonEditorFrame(wx.Frame):
                 field_names_found = self.find_field_names(search_term)
                 for (field_name_found, class_found) in field_names_found:
                     search_results.Append((field_name_found, "Field Names", class_found))
-                search_results.Append(("b", "base"))
-                search_results.Append(("c", "base"))
-                search_results.Append(("d", "plate"))
+                field_values_found = self.find_field_values(search_term)
+                for (field_value_found, class_found, object_found, field_name_found) in field_values_found:
+                    search_results.Append((field_value_found, "Field Values", class_found, object_found,
+                                           field_name_found))
                 self.search_jump_notebook.AddPage(search_results, new_page_label, select=True)
 
     def find_class(self, find_text):
@@ -293,6 +279,40 @@ class EpJsonEditorFrame(wx.Frame):
                 if find_text.upper() in search_in_field.upper():
                     found_field_names.append((search_in_field, class_name))
         return found_field_names
+
+    def find_field_values(self, find_text):
+
+        found_field_values = []
+        for class_name, object_dict in self.current_file.items():
+            extension_field_group = ''
+            if self.data_dictionary[class_name].extensible_size > 0:
+                extension_field_group = self.data_dictionary[class_name].extension
+            for object_name, field_dict in object_dict.items():
+                for field_name, field_value in field_dict.items():
+                    if field_name != extension_field_group:
+                        if find_text.upper() in str(field_value).upper():
+                            field_name_to_use = field_name
+                            # find the normal field name with upper case and no underscores
+                            schema_input_fields = self.data_dictionary[class_name].input_fields
+                            if 'field_name_with_spaces' in schema_input_fields[field_name]:
+                                field_name_to_use = schema_input_fields[field_name]['field_name_with_spaces']
+                            found_field_values.append((field_value, class_name, object_name, field_name_to_use))
+                    else:
+                        for counter, extensible_dict in enumerate(field_value, start=1):
+                            for extensible_field_name, extensible_field_value in extensible_dict.items():
+                                if find_text.upper() in str(extensible_field_value).upper():
+                                    field_name_to_use = extensible_field_name
+                                    # find the normal field name with upper case and no underscores
+                                    schema_input_fields = self.data_dictionary[class_name].input_fields[
+                                        extension_field_group]
+                                    if 'field_name_with_spaces' in schema_input_fields[extensible_field_name]:
+                                        field_name_to_use = schema_input_fields[extensible_field_name][
+                                            'field_name_with_spaces']
+                                    display_name = field_name_to_use + "-" + str(counter).zfill(3)
+                                    found_field_values.append((extensible_field_value, class_name, object_name,
+                                                               display_name))
+
+        return found_field_values
 
     def handle_open_file(self, _):
         with wx.FileDialog(self, "Open EnergyPlus epJSON file", wildcard="epJSON files (*.epJSON)|*.epJSON",
