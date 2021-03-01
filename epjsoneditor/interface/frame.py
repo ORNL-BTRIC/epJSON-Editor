@@ -49,6 +49,7 @@ class EpJsonEditorFrame(wx.Frame):
         self.search_field = None
         self.search_jump_notebook = None
         self.search_panel = None
+        self.search_results = {}
         self.create_gui()
 
     def create_gui(self):
@@ -194,8 +195,8 @@ class EpJsonEditorFrame(wx.Frame):
         tools_search.SetToolBitmapSize(wx.Size(24, 24))
 
         tools_search.AddLabel(-1, "Find:", 25)
-        self.search_field = wx.ComboBox(tools_search, value='', choices=['zone', 'building', 'lighting'],
-                                        size=(200, 20), style=wx.CB_DROPDOWN | wx.TE_PROCESS_ENTER)
+        self.search_field = wx.ComboBox(tools_search, value='', size=(200, 20),
+                                        style=wx.CB_DROPDOWN | wx.TE_PROCESS_ENTER)
 
         tools_search.AddControl(self.search_field)
         self.Bind(wx.EVT_COMBOBOX, self.handle_find_button, self.search_field)
@@ -204,9 +205,9 @@ class EpJsonEditorFrame(wx.Frame):
         find_button = tools_search.AddSimpleTool(-2, "Find", wx.ArtProvider.GetBitmap(wx.ART_FIND))
         self.Bind(wx.EVT_TOOL, self.handle_find_button, find_button)
         tools_search.AddSpacer(20)
-        jump_button = wx.Button(tools_search, id=wx.ID_ANY, label="Jump", size=(60, 20))
-        jump_button.Bind(wx.EVT_BUTTON, self.handle_jump_button)
-        tools_search.AddControl(jump_button)
+        # jump_button = wx.Button(tools_search, id=wx.ID_ANY, label="Jump", size=(60, 20))
+        # jump_button.Bind(wx.EVT_BUTTON, self.handle_jump_button)
+        # tools_search.AddControl(jump_button)
         # tools_search.AddSpacer(20)
         # tools_search.AddLabel(-1, "Replace:", 40)
         # replace_field = wx.ComboBox(tools_search, value='', choices=['zone', 'building', 'lighting'], size=(200, 20))
@@ -245,23 +246,27 @@ class EpJsonEditorFrame(wx.Frame):
                     self.search_jump_notebook.SetSelection(page_index)
                     found = True
             if not found:
-                search_results = wx.ListCtrl(self.search_panel, -1, style=wx.LC_REPORT)
-                search_results.AppendColumn('Found Item', width=100)
-                search_results.AppendColumn('Type', width=80)
-                search_results.AppendColumn('Class', width=80)
-                search_results.AppendColumn('Object', width=80)
-                search_results.AppendColumn('Field', width=80)
+                self.search_results[search_term] = wx.ListCtrl(self.search_panel, -1, style=wx.LC_REPORT)
+                self.search_results[search_term].AppendColumn('Found Item', width=80)
+                self.search_results[search_term].AppendColumn('Type', width=80)
+                self.search_results[search_term].AppendColumn('Class', width=80)
+                self.search_results[search_term].AppendColumn('Object', width=80)
+                self.search_results[search_term].AppendColumn('Field', width=80)
                 classes_found = self.find_class(search_term)
                 for class_found in classes_found:
-                    search_results.Append((class_found, "Class Names"))
+                    self.search_results[search_term].Append((class_found, "Class Names"))
                 field_names_found = self.find_field_names(search_term)
                 for (field_name_found, class_found) in field_names_found:
-                    search_results.Append((field_name_found, "Field Names", class_found))
+                    self.search_results[search_term].Append((field_name_found, "Field Names", class_found))
                 field_values_found = self.find_field_values(search_term)
                 for (field_value_found, class_found, object_found, field_name_found) in field_values_found:
-                    search_results.Append((field_value_found, "Field Values", class_found, object_found,
-                                           field_name_found))
-                self.search_jump_notebook.AddPage(search_results, new_page_label, select=True)
+                    self.search_results[search_term].Append((field_value_found, "Field Values", class_found,
+                                                             object_found, field_name_found))
+                for column_index in range(self.search_results[search_term].GetColumnCount()):
+                    self.search_results[search_term].SetColumnWidth(column_index, wx.LIST_AUTOSIZE)
+                self.search_results[search_term].Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.handle_search_double_click)
+                self.search_jump_notebook.AddPage(self.search_results[search_term], new_page_label, select=True)
+                self.search_field.Append(search_term)
 
     def find_class(self, find_text):
         names_of_classes = list(self.data_dictionary.keys())
@@ -281,7 +286,6 @@ class EpJsonEditorFrame(wx.Frame):
         return found_field_names
 
     def find_field_values(self, find_text):
-
         found_field_values = []
         for class_name, object_dict in self.current_file.items():
             extension_field_group = ''
@@ -335,7 +339,7 @@ class EpJsonEditorFrame(wx.Frame):
         settings_dialog.Destroy()
         self.update_grid(self.selected_object_name)
 
-    def handle_jump_button(self, _):
+    def handle_jump_double_click(self, _):
         selected_destination = self.jump_destination_list.GetFirstSelected()
         if selected_destination != -1:
             print(selected_destination)
@@ -345,17 +349,40 @@ class EpJsonEditorFrame(wx.Frame):
             print(name_of_object, input_object_destination, field_destination)
             self.go_to_cell(input_object_destination, name_of_object, field_destination)
 
-    def handle_jump_double_click(self, event):
-        self.handle_jump_button(event)
+    def handle_search_double_click(self, _):
+        index = self.search_jump_notebook.GetPageIndex(self.search_jump_notebook.GetCurrentPage())
+        tab_name = self.search_jump_notebook.GetPageText(index)
+        search_term = tab_name[8:]
+        # print(f"notebook tab {search_term} - {index} - {tab_name}")
+        selected_destination = self.search_results[search_term].GetFirstSelected()
+        if selected_destination != -1:
+            found_item = self.search_results[search_term].GetItemText(selected_destination, 0)
+            type_of_find = self.search_results[search_term].GetItemText(selected_destination, 1)
+            class_of_find = self.search_results[search_term].GetItemText(selected_destination, 2)
+            object_name_of_find = self.search_results[search_term].GetItemText(selected_destination, 3)
+            field_name_of_find = self.search_results[search_term].GetItemText(selected_destination, 4)
+            print(found_item, type_of_find, class_of_find, object_name_of_find, field_name_of_find)
+            if type_of_find == 'Class Names':
+                object_list_item = self.name_to_object_list_item[found_item]
+                self.object_list_tree.SelectItem(object_list_item)  # this triggers update_grid
+            elif type_of_find == 'Field Names':
+                self.go_to_cell(class_of_find, '', field_name_of_find)
+            elif type_of_find == 'Field Values':
+                self.go_to_cell(class_of_find, object_name_of_find, field_name_of_find)
 
     def go_to_cell(self, input_object, name_of_object, field_name):
         object_list_item = self.name_to_object_list_item[input_object]
         self.object_list_tree.SelectItem(object_list_item)  # this triggers update_grid
-        column_number = self.name_to_column_number[name_of_object]
-        row_number = self.field_to_row_number[field_name]
-        self.main_grid.GoToCell(row_number, column_number)
-        self.main_grid.SetFocus()
-        self.enter_cell(row_number, column_number)
+        column_number = -1
+        if name_of_object:
+            column_number = self.name_to_column_number[name_of_object]
+        row_number = -1
+        if field_name in self.field_to_row_number:
+            row_number = self.field_to_row_number[field_name]
+        if column_number >= 0 & row_number >= 0:
+            self.main_grid.GoToCell(row_number, column_number)
+            self.main_grid.SetFocus()
+            self.enter_cell(row_number, column_number)
 
     def load_current_file(self, path_name):
         if os.path.exists(path_name):
