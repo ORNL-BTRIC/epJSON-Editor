@@ -69,11 +69,13 @@ class SchemaInputObject:
         self.fix_any_of(return_dict)
         return return_dict
 
-    def fix_any_of(self, dictionary):
+    @staticmethod
+    def fix_any_of(dictionary):
         if 'field' in dictionary:
             print(f'field found in dictionary: {dictionary}')
         if 'anyOf' in dictionary:
-            # print(f'anyOf found in: {field} of class {return_dict["field_name_with_spaces"]} in the form {return_dict["anyOf"]}')
+            # print(f'anyOf found in: {field} of class {return_dict["field_name_with_spaces"]}
+            # in the form {return_dict["anyOf"]}')
             if len(dictionary['anyOf']) == 2:
                 first_dict, second_dict = dictionary['anyOf']
                 combined_enum = []

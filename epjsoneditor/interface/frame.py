@@ -509,7 +509,8 @@ class EpJsonEditorFrame(wx.Frame):
                     range_string += 'but no maximum.'
                 explanation += os.linesep + range_string
             if 'is_required' in current_field:
-                explanation += os.linesep + "This field is required"
+                if current_field['is_required']:
+                    explanation += os.linesep + "This field is required"
         self.explanation_text.Value = explanation
 
     def update_grid(self, selected_object_name):
@@ -545,7 +546,9 @@ class EpJsonEditorFrame(wx.Frame):
                                                                                    active_input_object_name,
                                                                                    active_input_objects)
                         self.main_grid.SetCellValue(row_counter, column_counter, display_value)
-                        if not self.is_value_valid(row_counter, unconverted_value):
+                        if self.is_value_valid(row_counter, unconverted_value):
+                            self.main_grid.SetCellBackgroundColour(row_counter, column_counter, "white")
+                        else:
                             self.main_grid.SetCellBackgroundColour(row_counter, column_counter, "tan")
         # self.main_grid.AutoSizeColumns()
         self.resize_auto_plus_all_columns()
@@ -626,7 +629,8 @@ class EpJsonEditorFrame(wx.Frame):
                 row_field["extensible_root_field_name"]]
             if row_field["extensible_repeat_group"] < len(extensible_field_list):
                 extensible_field = extensible_field_list[row_field["extensible_repeat_group"]]
-                cell_value = extensible_field[row_field["field_name"]]
+                if row_field["field_name"] in extensible_field:
+                    cell_value = extensible_field[row_field["field_name"]]
         if not self.use_si_units:
             cell_value_string = str(self.convert_unit_to_ip_using_row_index(cell_value, row_index))
         else:
@@ -639,6 +643,8 @@ class EpJsonEditorFrame(wx.Frame):
             if (row_field['type'] == 'number' or row_field['type'] == 'number_or_string') and value != '':
                 if self.is_convertible_to_float(value):
                     numeric_value = float(value)
+                    if not self.use_si_units:
+                        numeric_value = self.convert_unit_to_si_using_row_index(numeric_value, row_index)
                     if 'minimum' in row_field:
                         if 'exclusiveMinimum' in row_field:
                             if numeric_value <= row_field['minimum']:
@@ -654,8 +660,9 @@ class EpJsonEditorFrame(wx.Frame):
                             if numeric_value > row_field['maximum']:
                                 return False
             elif 'enum' in row_field:
-                if value not in row_field['enum']:
-                    return False
+                if value:  # don't check enums if blank
+                    if value not in row_field['enum']:
+                        return False
         else:
             print(f'type not found in row field for {row_index} and value {value} may be due to anyOf')
         return True
