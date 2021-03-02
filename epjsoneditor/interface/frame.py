@@ -484,12 +484,12 @@ class EpJsonEditorFrame(wx.Frame):
             if 'note' in current_field:
                 explanation += os.linesep + os.linesep + current_field['note'] + os.linesep
             if 'default' in current_field:
-                default_value = self.convert_unit_using_row_index(current_field['default'], row_number)
+                default_value = self.convert_unit_to_ip_using_row_index(current_field['default'], row_number)
                 explanation += os.linesep + f"Default value: {str(default_value)}"
             if 'minimum' in current_field or 'maximum' in current_field:
                 range_string = "Range: "
                 if 'minimum' in current_field:
-                    minimum_value = self.convert_unit_using_row_index(current_field['minimum'], row_number)
+                    minimum_value = self.convert_unit_to_ip_using_row_index(current_field['minimum'], row_number)
                     range_string += str(minimum_value)
                     if 'exclusiveMinimum' in current_field:
                         range_string += " < "
@@ -503,7 +503,7 @@ class EpJsonEditorFrame(wx.Frame):
                         range_string += " < "
                     else:
                         range_string += " <= "
-                    maximum_value = self.convert_unit_using_row_index(current_field['maximum'], row_number)
+                    maximum_value = self.convert_unit_to_ip_using_row_index(current_field['maximum'], row_number)
                     range_string += str(maximum_value)
                 else:
                     range_string += 'but no maximum.'
@@ -627,7 +627,10 @@ class EpJsonEditorFrame(wx.Frame):
             if row_field["extensible_repeat_group"] < len(extensible_field_list):
                 extensible_field = extensible_field_list[row_field["extensible_repeat_group"]]
                 cell_value = extensible_field[row_field["field_name"]]
-        cell_value_string = str(self.convert_unit_using_row_index(cell_value, row_index))
+        if not self.use_si_units:
+            cell_value_string = str(self.convert_unit_to_ip_using_row_index(cell_value, row_index))
+        else:
+            cell_value_string = str(cell_value)
         return cell_value_string, cell_value
 
     def is_value_valid(self, row_index, value):
@@ -657,7 +660,15 @@ class EpJsonEditorFrame(wx.Frame):
             print(f'type not found in row field for {row_index} and value {value} may be due to anyOf')
         return True
 
-    def convert_unit_using_row_index(self, value_to_convert, row_index):
+    @staticmethod
+    def is_convertible_to_float(value):
+        try:
+            float(value)
+            return True
+        except ValueError:
+            return False
+
+    def convert_unit_to_ip_using_row_index(self, value_to_convert, row_index):
         row_field = self.row_fields[row_index]
         converted_value = value_to_convert  # return value is input unless converted
         if self.use_si_units:
@@ -670,13 +681,36 @@ class EpJsonEditorFrame(wx.Frame):
                             unit_lookup = row_field["units"] + "___" + row_field["ip_unit"]
                         else:
                             unit_lookup = row_field["units"]
-                        converted_value = self.convert_using_unit_string(value_to_convert, unit_lookup)
+                        converted_value = self.convert_using_unit_string_to_ip(value_to_convert, unit_lookup)
         return converted_value
 
-    def convert_using_unit_string(self, value_to_convert, unit_string):
+    def convert_using_unit_string_to_ip(self, value_to_convert, unit_string):
         converted_value = value_to_convert * self.unit_conversions[unit_string]["multiplier"]
         if "offset" in self.unit_conversions[unit_string]:
             converted_value = converted_value + self.unit_conversions[unit_string]["offset"]
+        return converted_value
+
+    def convert_unit_to_si_using_row_index(self, value_to_convert, row_index):
+        row_field = self.row_fields[row_index]
+        converted_value = value_to_convert  # return value is input unless converted
+        if self.use_si_units:
+            return converted_value
+        if type(value_to_convert) is float or type(value_to_convert) is int:
+            if "type" in row_field:
+                if row_field["type"] == "number" or row_field["type"] == "number_or_string":
+                    if "units" in row_field and not self.use_si_units:
+                        if "ip_unit" in row_field:
+                            unit_lookup = row_field["units"] + "___" + row_field["ip_unit"]
+                        else:
+                            unit_lookup = row_field["units"]
+                        converted_value = self.convert_using_unit_string_to_si(value_to_convert, unit_lookup)
+        return converted_value
+
+    def convert_using_unit_string_to_si(self, value_to_convert, unit_string):
+        converted_value = value_to_convert
+        if "offset" in self.unit_conversions[unit_string]:
+            converted_value = converted_value - self.unit_conversions[unit_string]["offset"]
+        converted_value = converted_value / self.unit_conversions[unit_string]["multiplier"]
         return converted_value
 
     def handle_cell_left_click(self, event):
@@ -724,10 +758,15 @@ class EpJsonEditorFrame(wx.Frame):
         current_input_object_name = self.column_input_object_names[cell_column]
         active_input_object = active_input_objects[current_input_object_name]
         row_field = self.row_fields[cell_row]
+        updated_cell_value = new_cell_value
+        if self.is_convertible_to_float(new_cell_value):
+            updated_cell_value = float(updated_cell_value)
+            if not self.use_si_units:
+                updated_cell_value = self.convert_unit_to_si_using_row_index(updated_cell_value, cell_row)
         # set the value in the json data structure
         if row_field['field_name'] == 'name':
-            active_input_objects[new_cell_value] = active_input_objects.pop(current_input_object_name)
-            self.column_input_object_names[cell_column] = new_cell_value
+            active_input_objects[updated_cell_value] = active_input_objects.pop(current_input_object_name)
+            self.column_input_object_names[cell_column] = updated_cell_value
         elif "extensible_root_field_name" in row_field:
             extensible_field_list = active_input_objects[current_input_object_name][
                 row_field["extensible_root_field_name"]]
@@ -742,9 +781,9 @@ class EpJsonEditorFrame(wx.Frame):
                     # show the new lines added
                     self.update_grid(self.selected_object_name)
             extensible_field = extensible_field_list[row_field["extensible_repeat_group"]]
-            extensible_field[row_field["field_name"]] = new_cell_value
+            extensible_field[row_field["field_name"]] = updated_cell_value
         else:
-            active_input_object[row_field['field_name']] = new_cell_value
+            active_input_object[row_field['field_name']] = updated_cell_value
 
     @staticmethod
     def remove_pipe_and_after(string_with_pipe):
@@ -767,11 +806,11 @@ class EpJsonEditorFrame(wx.Frame):
                     for referenced_name in self.reference_names[reference_list_name]:
                         choices.append(referenced_name + " | object")
         if 'default' in row_field:
-            choices.append(str(self.convert_unit_using_row_index(row_field['default'], cell_row)) + " | default")
+            choices.append(str(self.convert_unit_to_ip_using_row_index(row_field['default'], cell_row)) + " | default")
         if 'minimum' in row_field:
-            choices.append(str(self.convert_unit_using_row_index(row_field['minimum'], cell_row)) + " | minimum")
+            choices.append(str(self.convert_unit_to_ip_using_row_index(row_field['minimum'], cell_row)) + " | minimum")
         if 'maximum' in row_field:
-            choices.append(str(self.convert_unit_using_row_index(row_field['maximum'], cell_row)) + " | maximum")
+            choices.append(str(self.convert_unit_to_ip_using_row_index(row_field['maximum'], cell_row)) + " | maximum")
         self.main_grid.SetCellEditor(cell_row, cell_column,
                                      wx.grid.GridCellChoiceEditor(choices, allowOthers=True))
 
@@ -1006,11 +1045,3 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         """
         with wx.MessageDialog(self, text, 'About epJSON Editor', wx.OK | wx.ICON_INFORMATION) as dlg:
             dlg.ShowModal()
-
-    @staticmethod
-    def is_convertible_to_float(value):
-        try:
-            float(value)
-            return True
-        except ValueError:
-            return False
