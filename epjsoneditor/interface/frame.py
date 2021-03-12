@@ -106,7 +106,7 @@ class EpJsonEditorFrame(wx.Frame):
         self.object_list_tree = wx.TreeCtrl(self, style=wx.TR_HIDE_ROOT)
         self.object_list_root = self.object_list_tree.AddRoot("All Input Objects")
         self.object_list_tree.SetItemData(self.object_list_root, None)
-        self.object_list_show_groups = True
+        self.object_list_show_groups = hasattr(self.data_dictionary['Version'],'group')
         if self.object_list_show_groups:
             current_group_name = ''
             group_root = None
