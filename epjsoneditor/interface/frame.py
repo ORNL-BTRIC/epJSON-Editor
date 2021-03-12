@@ -147,9 +147,9 @@ class EpJsonEditorFrame(wx.Frame):
         tb_save_as_file = tool_main.AddSimpleTool(13, "Save As", wx.ArtProvider.GetBitmap(wx.ART_FILE_SAVE_AS))
         self.Bind(wx.EVT_TOOL, self.handle_save_as_file, tb_save_as_file)
 
-        tool_main.AddSeparator()
-        tool_main.AddSimpleTool(14, "Undo", wx.ArtProvider.GetBitmap(wx.ART_UNDO))
-        tool_main.AddSimpleTool(15, "Redo", wx.ArtProvider.GetBitmap(wx.ART_REDO))
+        # tool_main.AddSeparator()
+        # tool_main.AddSimpleTool(14, "Undo", wx.ArtProvider.GetBitmap(wx.ART_UNDO))
+        # tool_main.AddSimpleTool(15, "Redo", wx.ArtProvider.GetBitmap(wx.ART_REDO))
         tool_main.AddSeparator()
 
         tb_new_object = tool_main.AddSimpleTool(16, "New Obj", wx.ArtProvider.GetBitmap(wx.ART_PLUS))
