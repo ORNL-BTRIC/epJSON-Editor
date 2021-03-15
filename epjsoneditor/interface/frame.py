@@ -598,7 +598,13 @@ class EpJsonEditorFrame(wx.Frame):
             if self.use_si_units:
                 unit_string = input_field["units"]
             else:
-                unit_string = self.unit_conversions[input_field["units"]]["ip_unit"]
+                if input_field["units"] in self.unit_conversions:
+                    if "ip_unit" in self.unit_conversions[input_field["units"]]:
+                        unit_string = self.unit_conversions[input_field["units"]]["ip_unit"]
+                    else:
+                        print("ip-unit missing: " + input_field["units"])
+                else:
+                    print("ip-unit missing: " + input_field["units"])
         return unit_string
 
     def resize_grid_rows_columns(self, number_of_rows, number_of_columns):
