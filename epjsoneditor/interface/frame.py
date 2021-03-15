@@ -964,9 +964,13 @@ class EpJsonEditorFrame(wx.Frame):
         if self.selected_object_name in self.current_file:
             all_objects_in_class = self.current_file[self.selected_object_name]
             for column_selected in columns_selected:
-                object_name = self.main_grid.GetCellValue(0, column_selected)
+                object_name = self.column_input_object_names[column_selected]
                 if object_name in all_objects_in_class:
                     del all_objects_in_class[object_name]
+                else:
+                    object_name = self.main_grid.GetCellValue(0, column_selected)
+                    if object_name in all_objects_in_class:
+                        del all_objects_in_class[object_name]
             self.update_grid(self.selected_object_name)
             self.update_list_of_object_counts()
 
