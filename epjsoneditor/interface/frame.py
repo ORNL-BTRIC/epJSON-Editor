@@ -625,12 +625,14 @@ class EpJsonEditorFrame(wx.Frame):
         elif row_field["field_name"] in active_input_objects[active_input_object_name]:
             cell_value = active_input_objects[active_input_object_name][row_field["field_name"]]
         elif "extensible_root_field_name" in row_field:
-            extensible_field_list = active_input_objects[active_input_object_name][
-                row_field["extensible_root_field_name"]]
-            if row_field["extensible_repeat_group"] < len(extensible_field_list):
-                extensible_field = extensible_field_list[row_field["extensible_repeat_group"]]
-                if row_field["field_name"] in extensible_field:
-                    cell_value = extensible_field[row_field["field_name"]]
+            if active_input_object_name in active_input_objects:
+                if row_field["extensible_root_field_name"] in active_input_objects[active_input_object_name]:
+                    extensible_field_list = active_input_objects[active_input_object_name][
+                        row_field["extensible_root_field_name"]]
+                    if row_field["extensible_repeat_group"] < len(extensible_field_list):
+                        extensible_field = extensible_field_list[row_field["extensible_repeat_group"]]
+                        if row_field["field_name"] in extensible_field:
+                            cell_value = extensible_field[row_field["field_name"]]
         if not self.use_si_units:
             cell_value_string = str(self.convert_unit_to_ip_using_row_index(cell_value, row_index))
         else:
@@ -775,8 +777,13 @@ class EpJsonEditorFrame(wx.Frame):
             active_input_objects[updated_cell_value] = active_input_objects.pop(current_input_object_name)
             self.column_input_object_names[cell_column] = updated_cell_value
         elif "extensible_root_field_name" in row_field:
-            extensible_field_list = active_input_objects[current_input_object_name][
-                row_field["extensible_root_field_name"]]
+            if row_field["extensible_root_field_name"] in active_input_objects[current_input_object_name]:
+                extensible_field_list = active_input_objects[current_input_object_name][
+                    row_field["extensible_root_field_name"]]
+            else: # if no extensible fields exist at all for the object
+                extensible_field_list = []
+                active_input_objects[current_input_object_name][row_field["extensible_root_field_name"]] = \
+                    extensible_field_list
             if row_field["extensible_repeat_group"] >= len(extensible_field_list):
                 # if editing a field beyond the length of the existing object
                 input_fields_of_object = self.data_dictionary[self.selected_object_name].input_fields
@@ -826,7 +833,9 @@ class EpJsonEditorFrame(wx.Frame):
         if selected_object_name in self.current_file:
             active_input_objects = self.current_file[selected_object_name]
             for active_input_object in active_input_objects.keys():
-                max_repeat = max(max_repeat, len(active_input_objects[active_input_object][field_name]))
+                if active_input_object in active_input_objects:
+                    if field_name in active_input_objects[active_input_object]:
+                        max_repeat = max(max_repeat, len(active_input_objects[active_input_object][field_name]))
         return max_repeat
 
     def create_data_dictionary(self):
