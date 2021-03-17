@@ -241,13 +241,8 @@ class EpJsonEditorFrame(wx.Frame):
         if search_term:
             # check if the search term has already been used
             new_page_label = f"Search: {search_term}"
-            found = False
-            for page_index in range(0, self.search_jump_notebook.GetPageCount()):
-                page_label = self.search_jump_notebook.GetPageText(page_index)
-                if new_page_label == page_label:
-                    self.search_jump_notebook.SetSelection(page_index)
-                    found = True
-            if not found:
+            page_index = self.find_page_in_search_jump_notebook(new_page_label)
+            if page_index == -1: # not found
                 self.search_results[search_term] = wx.ListCtrl(self.search_panel, -1, style=wx.LC_REPORT)
                 self.search_results[search_term].AppendColumn('Found Item', width=80)
                 self.search_results[search_term].AppendColumn('Type', width=80)
@@ -398,12 +393,38 @@ class EpJsonEditorFrame(wx.Frame):
                 self.gather_active_references()
                 self.update_list_of_object_counts()
                 self.update_dict_of_jumps()
-                #  self.validator(self.current_file)
-                self.validator.check_if_valid(self.current_file)
+                self.check_file_with_schema()
             self.changes_not_saved = False
             self.update_title()
             self.update_grid(self.selected_object_name)
             self.Refresh()
+
+    def check_file_with_schema(self):
+        validation_errors = self.validator.check_if_valid(self.current_file)
+        page_label = "Validation"
+        if validation_errors:
+            validation_page = self.find_page_in_search_jump_notebook("Validation")
+            if validation_page == -1:
+                self.search_results[page_label] = wx.ListCtrl(self.search_panel, -1, style=wx.LC_REPORT)
+                self.search_results[page_label].AppendColumn('Error', width=80)
+                self.search_results[page_label].AppendColumn('Class', width=80)
+                self.search_results[page_label].AppendColumn('Object', width=80)
+                self.search_results[page_label].AppendColumn('Field', width=80)
+            else:
+                self.search_results[page_label].DeleteAllItems()
+            for (error_message, error_path) in validation_errors:
+                class_name, object_name, field_name = error_path
+                self.search_results[page_label].Append((error_message, class_name, object_name, field_name))
+            if validation_page:
+                self.search_jump_notebook.AddPage(self.search_results[page_label], page_label, select=True)
+
+    def find_page_in_search_jump_notebook(self, page_name):
+        for page_index in range(0, self.search_jump_notebook.GetPageCount()):
+            page_label = self.search_jump_notebook.GetPageText(page_index)
+            if page_name == page_label:
+                self.search_jump_notebook.SetSelection(page_index)
+                return(page_index)
+        return -1
 
     def update_title(self):
         if os.path.exists(self.current_file_path):
