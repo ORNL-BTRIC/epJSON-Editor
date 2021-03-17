@@ -9,6 +9,7 @@ from epjsoneditor.schemainputobject import SchemaInputObject
 from epjsoneditor.referencesfromdatadictionary import ReferencesFromDataDictionary
 from epjsoneditor.interface.settings_dialog import SettingsDialog
 from epjsoneditor.utilities.locate_schema import LocateSchema
+from epjsoneditor.utilities.validate import ValidateEpJson
 
 
 class EpJsonEditorFrame(wx.Frame):
@@ -22,6 +23,7 @@ class EpJsonEditorFrame(wx.Frame):
         self.data_dictionary = {}
         self.cross_references = {}
         self.reference_names = {}
+        self.validator = None
         self.create_data_dictionary()
         self.explanation_text = None
         self.object_list_tree = None
@@ -106,7 +108,7 @@ class EpJsonEditorFrame(wx.Frame):
         self.object_list_tree = wx.TreeCtrl(self, style=wx.TR_HIDE_ROOT)
         self.object_list_root = self.object_list_tree.AddRoot("All Input Objects")
         self.object_list_tree.SetItemData(self.object_list_root, None)
-        self.object_list_show_groups = hasattr(self.data_dictionary['Version'],'group')
+        self.object_list_show_groups = hasattr(self.data_dictionary['Version'], 'group')
         if self.object_list_show_groups:
             current_group_name = ''
             group_root = None
@@ -136,7 +138,7 @@ class EpJsonEditorFrame(wx.Frame):
         tool_main = aui.AuiToolBar(self, -1, wx.DefaultPosition, wx.DefaultSize,
                                    agwStyle=aui.AUI_TB_TEXT)
         tool_main.SetToolBitmapSize(wx.Size(48, 48))
-        tool_main.AddSimpleTool(10, "New", wx.ArtProvider.GetBitmap(wx.ART_NEW))
+        # tool_main.AddSimpleTool(10, "New", wx.ArtProvider.GetBitmap(wx.ART_NEW))
 
         tb_open_file = tool_main.AddSimpleTool(11, "Open", wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN))
         self.Bind(wx.EVT_TOOL, self.handle_open_file, tb_open_file)
@@ -319,6 +321,10 @@ class EpJsonEditorFrame(wx.Frame):
         return found_field_values
 
     def handle_open_file(self, _):
+        if self.changes_not_saved:
+            if wx.MessageBox("Do you want an opportunity to save the changes you made prior to clearing this file?",
+                             "Please confirm", wx.ICON_QUESTION | wx.YES_NO) != wx.NO:
+                return
         with wx.FileDialog(self, "Open EnergyPlus epJSON file", wildcard="epJSON files (*.epJSON)|*.epJSON",
                            style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fileDialog:
             if fileDialog.ShowModal() == wx.ID_CANCEL:
@@ -392,7 +398,11 @@ class EpJsonEditorFrame(wx.Frame):
                 self.gather_active_references()
                 self.update_list_of_object_counts()
                 self.update_dict_of_jumps()
+                #  self.validator(self.current_file)
+                self.validator.check_if_valid(self.current_file)
+            self.changes_not_saved = False
             self.update_title()
+            self.update_grid(self.selected_object_name)
             self.Refresh()
 
     def update_title(self):
@@ -422,6 +432,9 @@ class EpJsonEditorFrame(wx.Frame):
                 self.save_current_file(pathname)
             except IOError:
                 wx.LogError(f"Cannot save current data in file {pathname}")
+            self.changes_not_saved = False
+            self.update_title()
+            self.Refresh()
 
     def save_current_file(self, path_name):
         self.current_file_path = path_name
@@ -433,9 +446,9 @@ class EpJsonEditorFrame(wx.Frame):
 
     def handle_close(self, event):
         if event.CanVeto() and self.changes_not_saved:
-            if wx.MessageBox("The file has not been saved... continue closing?",
+            if wx.MessageBox("Do you want an opportunity to save the changes you made prior to clearing this file?",
                              "Please confirm",
-                             wx.ICON_QUESTION | wx.YES_NO) != wx.YES:
+                             wx.ICON_QUESTION | wx.YES_NO) != wx.NO:
                 event.Veto()
                 return
         # de-initialize the frame manager
@@ -786,7 +799,7 @@ class EpJsonEditorFrame(wx.Frame):
             if row_field["extensible_root_field_name"] in active_input_objects[current_input_object_name]:
                 extensible_field_list = active_input_objects[current_input_object_name][
                     row_field["extensible_root_field_name"]]
-            else: # if no extensible fields exist at all for the object
+            else:  # if no extensible fields exist at all for the object
                 extensible_field_list = []
                 active_input_objects[current_input_object_name][row_field["extensible_root_field_name"]] = \
                     extensible_field_list
@@ -853,6 +866,9 @@ class EpJsonEditorFrame(wx.Frame):
         path_to_schema = locate_schema.get_schema_path()
         print(f"Schema found: {path_to_schema}")
         if path_to_schema:
+            with open(path_to_schema) as schema_file:
+                ep_schema_for_validation = json.load(schema_file)
+                self.validator = ValidateEpJson(ep_schema_for_validation)
             with open(path_to_schema) as schema_file:
                 ep_schema = json.load(schema_file)
                 for object_name, json_properties in ep_schema["properties"].items():
@@ -952,6 +968,8 @@ class EpJsonEditorFrame(wx.Frame):
             self.current_file[self.selected_object_name] = all_objects_in_class
         self.update_grid(self.selected_object_name)
         self.update_list_of_object_counts()
+        self.changes_not_saved = True
+        self.update_title()
 
     def handle_duplicate_object(self, _):
         columns_selected = self.main_grid.GetSelectedCols()
@@ -964,6 +982,8 @@ class EpJsonEditorFrame(wx.Frame):
                 all_objects_in_class[object_name + "-copy"] = duplicated_object
             self.update_grid(self.selected_object_name)
             self.update_list_of_object_counts()
+            self.changes_not_saved = True
+            self.update_title()
 
     def handle_tb_delete_object(self, _):
         columns_selected = self.main_grid.GetSelectedCols()
@@ -979,6 +999,8 @@ class EpJsonEditorFrame(wx.Frame):
                         del all_objects_in_class[object_name]
             self.update_grid(self.selected_object_name)
             self.update_list_of_object_counts()
+            self.changes_not_saved = True
+            self.update_title()
 
     def handle_tb_copy_object(self, _):
         to_copy = {}
@@ -1026,6 +1048,8 @@ class EpJsonEditorFrame(wx.Frame):
             self.object_list_tree.SelectItem(object_list_item)  # this triggers update_grid
             self.update_grid(self.selected_object_name)
             self.update_list_of_object_counts()
+            self.changes_not_saved = True
+            self.update_title()
 
     def handle_tb_help_menu(self, _):
         help_menu = wx.Menu()

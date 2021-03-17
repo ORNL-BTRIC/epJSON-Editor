@@ -1,3 +1,6 @@
 coverage
 nose
-wxPython
+wxPython~=4.1.0
+
+setuptools~=47.1.0
+jsonschema~=3.2.0
