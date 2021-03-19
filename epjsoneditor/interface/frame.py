@@ -413,9 +413,12 @@ class EpJsonEditorFrame(wx.Frame):
             else:
                 self.search_results[page_label].DeleteAllItems()
             for (error_message, error_path) in validation_errors:
-                class_name, object_name, field_name = error_path
-                self.search_results[page_label].Append((error_message, class_name, object_name, field_name))
-            if validation_page:
+                if len(error_path) == 3:
+                    class_name, object_name, field_name = error_path
+                    self.search_results[page_label].Append((error_message, class_name, object_name, field_name))
+                else:
+                    self.search_results[page_label].Append((error_message, error_path))
+            if validation_page == -1:
                 self.search_jump_notebook.AddPage(self.search_results[page_label], page_label, select=True)
 
     def find_page_in_search_jump_notebook(self, page_name):
@@ -463,6 +466,7 @@ class EpJsonEditorFrame(wx.Frame):
         self.update_title()
         with open(path_name, 'w') as output_file:
             json.dump(self.current_file, output_file, indent=4)
+        self.check_file_with_schema()
         self.Refresh()
 
     def handle_close(self, event):
