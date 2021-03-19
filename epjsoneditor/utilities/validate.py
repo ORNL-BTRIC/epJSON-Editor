@@ -13,7 +13,7 @@ class ValidateEpJson:
         messages = []
         for error in errors:
             # print(f"{error.message} in path {error.path}")
-            messages.append((error.message,error.path))
+            messages.append((error.message, error.path))
         end = time.time()
         print(f"time for check_if_valid is {end - start}")
         return messages

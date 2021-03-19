@@ -806,13 +806,14 @@ class EpJsonEditorFrame(wx.Frame):
         else:
             self.main_grid.SetCellBackgroundColour(cell_row, cell_column, "tan")
 
-    def set_file_value(self, cell_row, cell_column, new_cell_value):
+    def set_file_value(self, cell_row, cell_column, new_cell_value_string):
         active_input_objects = self.current_file[self.selected_object_name]
         current_input_object_name = self.column_input_object_names[cell_column]
         active_input_object = active_input_objects[current_input_object_name]
         row_field = self.row_fields[cell_row]
-        updated_cell_value = new_cell_value
-        if self.is_convertible_to_float(new_cell_value):
+        updated_cell_value = new_cell_value_string
+        if self.is_convertible_to_float(new_cell_value_string) and row_field['type'] == 'number' or row_field['type'] == \
+                'number_or_string':
             updated_cell_value = float(updated_cell_value)
             if not self.use_si_units:
                 updated_cell_value = self.convert_unit_to_si_using_row_index(updated_cell_value, cell_row)
