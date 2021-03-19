@@ -242,7 +242,7 @@ class EpJsonEditorFrame(wx.Frame):
             # check if the search term has already been used
             new_page_label = f"Search: {search_term}"
             page_index = self.find_page_in_search_jump_notebook(new_page_label)
-            if page_index == -1: # not found
+            if page_index == -1:  # not found
                 self.search_results[search_term] = wx.ListCtrl(self.search_panel, -1, style=wx.LC_REPORT)
                 self.search_results[search_term].AppendColumn('Found Item', width=80)
                 self.search_results[search_term].AppendColumn('Type', width=80)
@@ -402,6 +402,9 @@ class EpJsonEditorFrame(wx.Frame):
     def check_file_with_schema(self):
         validation_errors = self.validator.check_if_valid(self.current_file)
         page_label = "Validation"
+        validation_page = self.find_page_in_search_jump_notebook("Validation")
+        if validation_page > -1:
+            self.search_results[page_label].DeleteAllItems()
         if validation_errors:
             validation_page = self.find_page_in_search_jump_notebook("Validation")
             if validation_page == -1:
@@ -410,8 +413,6 @@ class EpJsonEditorFrame(wx.Frame):
                 self.search_results[page_label].AppendColumn('Class', width=80)
                 self.search_results[page_label].AppendColumn('Object', width=80)
                 self.search_results[page_label].AppendColumn('Field', width=80)
-            else:
-                self.search_results[page_label].DeleteAllItems()
             for (error_message, error_path) in validation_errors:
                 if len(error_path) == 3:
                     class_name, object_name, field_name = error_path
@@ -426,7 +427,7 @@ class EpJsonEditorFrame(wx.Frame):
             page_label = self.search_jump_notebook.GetPageText(page_index)
             if page_name == page_label:
                 self.search_jump_notebook.SetSelection(page_index)
-                return(page_index)
+                return page_index
         return -1
 
     def update_title(self):
@@ -812,8 +813,8 @@ class EpJsonEditorFrame(wx.Frame):
         active_input_object = active_input_objects[current_input_object_name]
         row_field = self.row_fields[cell_row]
         updated_cell_value = new_cell_value_string
-        if self.is_convertible_to_float(new_cell_value_string) and row_field['type'] == 'number' or row_field['type'] == \
-                'number_or_string':
+        if self.is_convertible_to_float(new_cell_value_string) and row_field['type'] == 'number' or \
+                row_field['type'] == 'number_or_string':
             updated_cell_value = float(updated_cell_value)
             if not self.use_si_units:
                 updated_cell_value = self.convert_unit_to_si_using_row_index(updated_cell_value, cell_row)
@@ -987,8 +988,16 @@ class EpJsonEditorFrame(wx.Frame):
         for field_name, field_details in fields_of_object.items():
             if 'default' in field_details:
                 new_object[field_name] = field_details['default']
+            elif 'enum' in field_details:
+                new_object[field_name] = field_details['enum'][0]
             else:
-                new_object[field_name] = ''
+                if field_details['type'] == 'string':
+                    new_object[field_name] = ''
+                if field_details['is_required']:
+                    if 'minimum' in field_details:
+                        new_object[field_name] = field_details['minimum']
+                    elif 'maximum' in field_details:
+                        new_object[field_name] = field_details['maximum']
         all_objects_in_class[f'new-{count_of_objects + 1}'] = new_object
         if count_of_objects == 0:
             self.current_file[self.selected_object_name] = all_objects_in_class
