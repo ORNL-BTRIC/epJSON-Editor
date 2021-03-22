@@ -18,7 +18,8 @@ class SettingsDialog(wx.Dialog):
         vbox = wx.BoxSizer(wx.VERTICAL)
 
         unit_options = ["SI/metric", "Inch-Pound"]
-        self.units_radio_box = wx.RadioBox(self, -1, "Unit System", wx.DefaultPosition, wx.DefaultSize, unit_options, 1, wx.RA_SPECIFY_COLS)
+        self.units_radio_box = wx.RadioBox(self, -1, "Unit System", wx.DefaultPosition, wx.DefaultSize, unit_options, 1,
+                                           wx.RA_SPECIFY_COLS)
         self.units_radio_box.SetSelection(0)
         self.Bind(wx.EVT_RADIOBOX, self.handle_unit_option_event, self.units_radio_box)
 
@@ -56,5 +57,5 @@ class SettingsDialog(wx.Dialog):
         self.EndModal(e.EventObject.Id)
         self.use_si_units = self.units_radio_box.GetSelection() == 0
 
-    def handle_close_cancel(self, e):
+    def handle_close_cancel(self, _):
         self.EndModal(SettingsDialog.CLOSE_SIGNAL_CANCEL)
