@@ -10,6 +10,7 @@ from epjsoneditor.referencesfromdatadictionary import ReferencesFromDataDictiona
 from epjsoneditor.interface.settings_dialog import SettingsDialog
 from epjsoneditor.utilities.locate_schema import LocateSchema
 from epjsoneditor.utilities.validate import ValidateEpJson
+from epjsoneditor.interface.editor_grid import EditorGrid
 
 
 class EpJsonEditorFrame(wx.Frame):
@@ -128,8 +129,9 @@ class EpJsonEditorFrame(wx.Frame):
                 self.name_to_object_list_item[name_of_class] = child
 
     def create_grid(self):
-        grid = wx.grid.Grid(self, -1, wx.Point(0, 0), wx.Size(150, 250),
-                            wx.NO_BORDER | wx.WANTS_CHARS)
+#        grid = wx.grid.Grid(self, -1, wx.Point(0, 0), wx.Size(150, 250),
+#                            wx.NO_BORDER | wx.WANTS_CHARS)
+        grid = EditorGrid(self)
         grid.CreateGrid(5, 5)
         return grid
 
