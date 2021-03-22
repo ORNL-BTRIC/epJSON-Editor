@@ -1097,7 +1097,7 @@ class EpJsonEditorFrame(wx.Frame):
         text = """
 epJSON Editor
 
-Version 0.1
+Version 0.2
 Copyright (c) 2021, Alliance for Sustainable Energy, LLC  and GARD Analytics, Inc
 
 Redistribution and use in source and binary forms, with or without
