@@ -130,6 +130,12 @@
 		"multiplier": 1,
 		"alternative": false
 	},
+	"kgWater/kgDryAir": {
+		"si_unit": "kgWater/kgDryAir",
+		"ip_unit": "lbWater/lbDryAir",
+		"multiplier": 1,
+		"alternative": false
+	},
 	"kJ/kg": {
 		"si_unit": "kJ/kg",
 		"ip_unit": "Btu/lb",

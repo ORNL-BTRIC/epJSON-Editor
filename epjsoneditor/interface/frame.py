@@ -9,6 +9,8 @@ from epjsoneditor.schemainputobject import SchemaInputObject
 from epjsoneditor.referencesfromdatadictionary import ReferencesFromDataDictionary
 from epjsoneditor.interface.settings_dialog import SettingsDialog
 from epjsoneditor.utilities.locate_schema import LocateSchema
+from epjsoneditor.utilities.validate import ValidateEpJson
+from epjsoneditor.interface.editor_grid import EditorGrid
 
 
 class EpJsonEditorFrame(wx.Frame):
@@ -22,6 +24,7 @@ class EpJsonEditorFrame(wx.Frame):
         self.data_dictionary = {}
         self.cross_references = {}
         self.reference_names = {}
+        self.validator = None
         self.create_data_dictionary()
         self.explanation_text = None
         self.object_list_tree = None
@@ -106,7 +109,7 @@ class EpJsonEditorFrame(wx.Frame):
         self.object_list_tree = wx.TreeCtrl(self, style=wx.TR_HIDE_ROOT)
         self.object_list_root = self.object_list_tree.AddRoot("All Input Objects")
         self.object_list_tree.SetItemData(self.object_list_root, None)
-        self.object_list_show_groups = True
+        self.object_list_show_groups = hasattr(self.data_dictionary['Version'], 'group')
         if self.object_list_show_groups:
             current_group_name = ''
             group_root = None
@@ -126,8 +129,9 @@ class EpJsonEditorFrame(wx.Frame):
                 self.name_to_object_list_item[name_of_class] = child
 
     def create_grid(self):
-        grid = wx.grid.Grid(self, -1, wx.Point(0, 0), wx.Size(150, 250),
-                            wx.NO_BORDER | wx.WANTS_CHARS)
+        #        grid = wx.grid.Grid(self, -1, wx.Point(0, 0), wx.Size(150, 250),
+        #                            wx.NO_BORDER | wx.WANTS_CHARS)
+        grid = EditorGrid(self)
         grid.CreateGrid(5, 5)
         return grid
 
@@ -136,7 +140,7 @@ class EpJsonEditorFrame(wx.Frame):
         tool_main = aui.AuiToolBar(self, -1, wx.DefaultPosition, wx.DefaultSize,
                                    agwStyle=aui.AUI_TB_TEXT)
         tool_main.SetToolBitmapSize(wx.Size(48, 48))
-        tool_main.AddSimpleTool(10, "New", wx.ArtProvider.GetBitmap(wx.ART_NEW))
+        # tool_main.AddSimpleTool(10, "New", wx.ArtProvider.GetBitmap(wx.ART_NEW))
 
         tb_open_file = tool_main.AddSimpleTool(11, "Open", wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN))
         self.Bind(wx.EVT_TOOL, self.handle_open_file, tb_open_file)
@@ -147,9 +151,9 @@ class EpJsonEditorFrame(wx.Frame):
         tb_save_as_file = tool_main.AddSimpleTool(13, "Save As", wx.ArtProvider.GetBitmap(wx.ART_FILE_SAVE_AS))
         self.Bind(wx.EVT_TOOL, self.handle_save_as_file, tb_save_as_file)
 
-        tool_main.AddSeparator()
-        tool_main.AddSimpleTool(14, "Undo", wx.ArtProvider.GetBitmap(wx.ART_UNDO))
-        tool_main.AddSimpleTool(15, "Redo", wx.ArtProvider.GetBitmap(wx.ART_REDO))
+        # tool_main.AddSeparator()
+        # tool_main.AddSimpleTool(14, "Undo", wx.ArtProvider.GetBitmap(wx.ART_UNDO))
+        # tool_main.AddSimpleTool(15, "Redo", wx.ArtProvider.GetBitmap(wx.ART_REDO))
         tool_main.AddSeparator()
 
         tb_new_object = tool_main.AddSimpleTool(16, "New Obj", wx.ArtProvider.GetBitmap(wx.ART_PLUS))
@@ -239,13 +243,8 @@ class EpJsonEditorFrame(wx.Frame):
         if search_term:
             # check if the search term has already been used
             new_page_label = f"Search: {search_term}"
-            found = False
-            for page_index in range(0, self.search_jump_notebook.GetPageCount()):
-                page_label = self.search_jump_notebook.GetPageText(page_index)
-                if new_page_label == page_label:
-                    self.search_jump_notebook.SetSelection(page_index)
-                    found = True
-            if not found:
+            page_index = self.find_page_in_search_jump_notebook(new_page_label)
+            if page_index == -1:  # not found
                 self.search_results[search_term] = wx.ListCtrl(self.search_panel, -1, style=wx.LC_REPORT)
                 self.search_results[search_term].AppendColumn('Found Item', width=80)
                 self.search_results[search_term].AppendColumn('Type', width=80)
@@ -319,6 +318,10 @@ class EpJsonEditorFrame(wx.Frame):
         return found_field_values
 
     def handle_open_file(self, _):
+        if self.changes_not_saved:
+            if wx.MessageBox("Do you want an opportunity to save the changes you made prior to clearing this file?",
+                             "Please confirm", wx.ICON_QUESTION | wx.YES_NO) != wx.NO:
+                return
         with wx.FileDialog(self, "Open EnergyPlus epJSON file", wildcard="epJSON files (*.epJSON)|*.epJSON",
                            style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fileDialog:
             if fileDialog.ShowModal() == wx.ID_CANCEL:
@@ -392,8 +395,42 @@ class EpJsonEditorFrame(wx.Frame):
                 self.gather_active_references()
                 self.update_list_of_object_counts()
                 self.update_dict_of_jumps()
+                self.check_file_with_schema()
+            self.changes_not_saved = False
             self.update_title()
+            self.update_grid(self.selected_object_name)
             self.Refresh()
+
+    def check_file_with_schema(self):
+        validation_errors = self.validator.check_if_valid(self.current_file)
+        page_label = "Validation"
+        validation_page = self.find_page_in_search_jump_notebook("Validation")
+        if validation_page > -1:
+            self.search_results[page_label].DeleteAllItems()
+        if validation_errors:
+            validation_page = self.find_page_in_search_jump_notebook("Validation")
+            if validation_page == -1:
+                self.search_results[page_label] = wx.ListCtrl(self.search_panel, -1, style=wx.LC_REPORT)
+                self.search_results[page_label].AppendColumn('Error', width=80)
+                self.search_results[page_label].AppendColumn('Class', width=80)
+                self.search_results[page_label].AppendColumn('Object', width=80)
+                self.search_results[page_label].AppendColumn('Field', width=80)
+            for (error_message, error_path) in validation_errors:
+                if len(error_path) == 3:
+                    class_name, object_name, field_name = error_path
+                    self.search_results[page_label].Append((error_message, class_name, object_name, field_name))
+                else:
+                    self.search_results[page_label].Append((error_message, error_path))
+            if validation_page == -1:
+                self.search_jump_notebook.AddPage(self.search_results[page_label], page_label, select=True)
+
+    def find_page_in_search_jump_notebook(self, page_name):
+        for page_index in range(0, self.search_jump_notebook.GetPageCount()):
+            page_label = self.search_jump_notebook.GetPageText(page_index)
+            if page_name == page_label:
+                self.search_jump_notebook.SetSelection(page_index)
+                return page_index
+        return -1
 
     def update_title(self):
         if os.path.exists(self.current_file_path):
@@ -422,6 +459,9 @@ class EpJsonEditorFrame(wx.Frame):
                 self.save_current_file(pathname)
             except IOError:
                 wx.LogError(f"Cannot save current data in file {pathname}")
+            self.changes_not_saved = False
+            self.update_title()
+            self.Refresh()
 
     def save_current_file(self, path_name):
         self.current_file_path = path_name
@@ -429,13 +469,14 @@ class EpJsonEditorFrame(wx.Frame):
         self.update_title()
         with open(path_name, 'w') as output_file:
             json.dump(self.current_file, output_file, indent=4)
+        self.check_file_with_schema()
         self.Refresh()
 
     def handle_close(self, event):
         if event.CanVeto() and self.changes_not_saved:
-            if wx.MessageBox("The file has not been saved... continue closing?",
+            if wx.MessageBox("Do you want an opportunity to save the changes you made prior to clearing this file?",
                              "Please confirm",
-                             wx.ICON_QUESTION | wx.YES_NO) != wx.YES:
+                             wx.ICON_QUESTION | wx.YES_NO) != wx.NO:
                 event.Veto()
                 return
         # de-initialize the frame manager
@@ -598,7 +639,13 @@ class EpJsonEditorFrame(wx.Frame):
             if self.use_si_units:
                 unit_string = input_field["units"]
             else:
-                unit_string = self.unit_conversions[input_field["units"]]["ip_unit"]
+                if input_field["units"] in self.unit_conversions:
+                    if "ip_unit" in self.unit_conversions[input_field["units"]]:
+                        unit_string = self.unit_conversions[input_field["units"]]["ip_unit"]
+                    else:
+                        print("ip-unit missing: " + input_field["units"])
+                else:
+                    print("ip-unit missing: " + input_field["units"])
         return unit_string
 
     def resize_grid_rows_columns(self, number_of_rows, number_of_columns):
@@ -625,12 +672,14 @@ class EpJsonEditorFrame(wx.Frame):
         elif row_field["field_name"] in active_input_objects[active_input_object_name]:
             cell_value = active_input_objects[active_input_object_name][row_field["field_name"]]
         elif "extensible_root_field_name" in row_field:
-            extensible_field_list = active_input_objects[active_input_object_name][
-                row_field["extensible_root_field_name"]]
-            if row_field["extensible_repeat_group"] < len(extensible_field_list):
-                extensible_field = extensible_field_list[row_field["extensible_repeat_group"]]
-                if row_field["field_name"] in extensible_field:
-                    cell_value = extensible_field[row_field["field_name"]]
+            if active_input_object_name in active_input_objects:
+                if row_field["extensible_root_field_name"] in active_input_objects[active_input_object_name]:
+                    extensible_field_list = active_input_objects[active_input_object_name][
+                        row_field["extensible_root_field_name"]]
+                    if row_field["extensible_repeat_group"] < len(extensible_field_list):
+                        extensible_field = extensible_field_list[row_field["extensible_repeat_group"]]
+                        if row_field["field_name"] in extensible_field:
+                            cell_value = extensible_field[row_field["field_name"]]
         if not self.use_si_units:
             cell_value_string = str(self.convert_unit_to_ip_using_row_index(cell_value, row_index))
         else:
@@ -760,13 +809,14 @@ class EpJsonEditorFrame(wx.Frame):
         else:
             self.main_grid.SetCellBackgroundColour(cell_row, cell_column, "tan")
 
-    def set_file_value(self, cell_row, cell_column, new_cell_value):
+    def set_file_value(self, cell_row, cell_column, new_cell_value_string):
         active_input_objects = self.current_file[self.selected_object_name]
         current_input_object_name = self.column_input_object_names[cell_column]
         active_input_object = active_input_objects[current_input_object_name]
         row_field = self.row_fields[cell_row]
-        updated_cell_value = new_cell_value
-        if self.is_convertible_to_float(new_cell_value):
+        updated_cell_value = new_cell_value_string
+        if self.is_convertible_to_float(new_cell_value_string) and row_field['type'] == 'number' or \
+                row_field['type'] == 'number_or_string':
             updated_cell_value = float(updated_cell_value)
             if not self.use_si_units:
                 updated_cell_value = self.convert_unit_to_si_using_row_index(updated_cell_value, cell_row)
@@ -775,8 +825,13 @@ class EpJsonEditorFrame(wx.Frame):
             active_input_objects[updated_cell_value] = active_input_objects.pop(current_input_object_name)
             self.column_input_object_names[cell_column] = updated_cell_value
         elif "extensible_root_field_name" in row_field:
-            extensible_field_list = active_input_objects[current_input_object_name][
-                row_field["extensible_root_field_name"]]
+            if row_field["extensible_root_field_name"] in active_input_objects[current_input_object_name]:
+                extensible_field_list = active_input_objects[current_input_object_name][
+                    row_field["extensible_root_field_name"]]
+            else:  # if no extensible fields exist at all for the object
+                extensible_field_list = []
+                active_input_objects[current_input_object_name][row_field["extensible_root_field_name"]] = \
+                    extensible_field_list
             if row_field["extensible_repeat_group"] >= len(extensible_field_list):
                 # if editing a field beyond the length of the existing object
                 input_fields_of_object = self.data_dictionary[self.selected_object_name].input_fields
@@ -826,7 +881,9 @@ class EpJsonEditorFrame(wx.Frame):
         if selected_object_name in self.current_file:
             active_input_objects = self.current_file[selected_object_name]
             for active_input_object in active_input_objects.keys():
-                max_repeat = max(max_repeat, len(active_input_objects[active_input_object][field_name]))
+                if active_input_object in active_input_objects:
+                    if field_name in active_input_objects[active_input_object]:
+                        max_repeat = max(max_repeat, len(active_input_objects[active_input_object][field_name]))
         return max_repeat
 
     def create_data_dictionary(self):
@@ -838,6 +895,9 @@ class EpJsonEditorFrame(wx.Frame):
         path_to_schema = locate_schema.get_schema_path()
         print(f"Schema found: {path_to_schema}")
         if path_to_schema:
+            with open(path_to_schema) as schema_file:
+                ep_schema_for_validation = json.load(schema_file)
+                self.validator = ValidateEpJson(ep_schema_for_validation)
             with open(path_to_schema) as schema_file:
                 ep_schema = json.load(schema_file)
                 for object_name, json_properties in ep_schema["properties"].items():
@@ -930,13 +990,23 @@ class EpJsonEditorFrame(wx.Frame):
         for field_name, field_details in fields_of_object.items():
             if 'default' in field_details:
                 new_object[field_name] = field_details['default']
+            elif 'enum' in field_details:
+                new_object[field_name] = field_details['enum'][0]
             else:
-                new_object[field_name] = ''
+                if field_details['type'] == 'string':
+                    new_object[field_name] = ''
+                if field_details['is_required']:
+                    if 'minimum' in field_details:
+                        new_object[field_name] = field_details['minimum']
+                    elif 'maximum' in field_details:
+                        new_object[field_name] = field_details['maximum']
         all_objects_in_class[f'new-{count_of_objects + 1}'] = new_object
         if count_of_objects == 0:
             self.current_file[self.selected_object_name] = all_objects_in_class
         self.update_grid(self.selected_object_name)
         self.update_list_of_object_counts()
+        self.changes_not_saved = True
+        self.update_title()
 
     def handle_duplicate_object(self, _):
         columns_selected = self.main_grid.GetSelectedCols()
@@ -949,17 +1019,25 @@ class EpJsonEditorFrame(wx.Frame):
                 all_objects_in_class[object_name + "-copy"] = duplicated_object
             self.update_grid(self.selected_object_name)
             self.update_list_of_object_counts()
+            self.changes_not_saved = True
+            self.update_title()
 
     def handle_tb_delete_object(self, _):
         columns_selected = self.main_grid.GetSelectedCols()
         if self.selected_object_name in self.current_file:
             all_objects_in_class = self.current_file[self.selected_object_name]
             for column_selected in columns_selected:
-                object_name = self.main_grid.GetCellValue(0, column_selected)
+                object_name = self.column_input_object_names[column_selected]
                 if object_name in all_objects_in_class:
                     del all_objects_in_class[object_name]
+                else:
+                    object_name = self.main_grid.GetCellValue(0, column_selected)
+                    if object_name in all_objects_in_class:
+                        del all_objects_in_class[object_name]
             self.update_grid(self.selected_object_name)
             self.update_list_of_object_counts()
+            self.changes_not_saved = True
+            self.update_title()
 
     def handle_tb_copy_object(self, _):
         to_copy = {}
@@ -1007,6 +1085,8 @@ class EpJsonEditorFrame(wx.Frame):
             self.object_list_tree.SelectItem(object_list_item)  # this triggers update_grid
             self.update_grid(self.selected_object_name)
             self.update_list_of_object_counts()
+            self.changes_not_saved = True
+            self.update_title()
 
     def handle_tb_help_menu(self, _):
         help_menu = wx.Menu()
@@ -1019,7 +1099,7 @@ class EpJsonEditorFrame(wx.Frame):
         text = """
 epJSON Editor
 
-Version 0.1
+Version 0.2
 Copyright (c) 2021, Alliance for Sustainable Energy, LLC  and GARD Analytics, Inc
 
 Redistribution and use in source and binary forms, with or without
