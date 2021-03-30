@@ -1,4 +1,5 @@
 .idea
+*.iml
 cover
 
 # Byte-compiled / optimized / DLL files
