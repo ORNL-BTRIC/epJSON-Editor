@@ -3,35 +3,51 @@ FROM ubuntu:18.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
+  && apt-get install -y python3-pip python-dev\
   && apt-get install -y software-properties-common \
   && add-apt-repository ppa:deadsnakes/ppa \
-  && apt-get install -y python3.7 \
+  && apt-get install -y python3.6 \
   && apt-get update
 
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.7 1
-RUN update-alternatives --config python
+RUN apt-get install -y python3-pip python3.6-dev \
+  && pip3 install --upgrade pip \
+  && apt-get install -y curl \
+  && apt-get update
+
+# venv build
+# without the use of VIRTUAL_ENV the venv will not activate or be seen
+ENV VIRTUAL_ENV=/opt/venv
+RUN python3.6 -m venv $VIRTUAL_ENV --without-pip
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+RUN python get-pip.py
+RUN rm get-pip.py
 RUN python --version
-RUN apt-get update \
-  && apt-get install -y python3-pip python3.7-dev \
-  && pip3 install --upgrade pip
 RUN pip --version
 
-ADD ./ /home/project/
-WORKDIR /home/project/epjsoneditor/
-
 # pip install from requirements is bypassed due to wxPython issue.
-RUN python3.7 -m pip install coverage \
+RUN python -m pip install coverage \
   coverage \
   nose \
   setuptools~=47.1.0 \
   jsonschema~=3.2.0 \
   pyinstaller~=4.2
 
-RUN python3.7 -m pip install -U \
+# special wxPython install
+RUN python -m pip install -U \
   -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-18.04 \
   wxPython
-RUN python3.7 -m pip install pypubsub
+RUN python -m pip install pypubsub
 
-RUN pyinstaller -F main.py
+# additional packages needed to compile project
+RUN apt-get install -y libgtk-3-0 \
+  libxxf86vm-dev \
+  libsm6 \
+  libnotify-dev \
+  libsdl2-dev
 
-# ENTRYPOINT ["python3"]
+ADD ./ /home/project/
+WORKDIR /home/project/epjsoneditor/
+
+RUN pyinstaller linux_onefile_main.spec
+#RUN pyinstaller linux_main.spec

@@ -1,8 +1,17 @@
 import os
 import string
 import glob
+import sys
 
 from epjsoneditor.utilities.crossplatform import Platform
+
+if getattr(sys, 'frozen', False):
+    # If the application is run as a bundle, the PyInstaller bootloader
+    # extends the sys module by a flag frozen=True and sets the app
+    # path into variable _MEIPASS'.
+    application_path = sys._MEIPASS
+else:
+    application_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 class LocateSchema:
@@ -26,7 +35,7 @@ class LocateSchema:
 
     def search_up_tree(self, file_sought):
         # first search from the current working directory and up directory tree
-        possible_dir = os.getcwd()
+        possible_dir = application_path
         possible_path = os.path.join(possible_dir, file_sought)
         while not os.path.exists(possible_path):
             previous_dir = possible_dir
