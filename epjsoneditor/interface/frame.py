@@ -4,6 +4,7 @@ import wx.lib.agw.aui as aui
 import os
 import json
 import time
+import sys
 
 from epjsoneditor.schemainputobject import SchemaInputObject
 from epjsoneditor.referencesfromdatadictionary import ReferencesFromDataDictionary
@@ -11,6 +12,14 @@ from epjsoneditor.interface.settings_dialog import SettingsDialog
 from epjsoneditor.utilities.locate_schema import LocateSchema
 from epjsoneditor.utilities.validate import ValidateEpJson
 from epjsoneditor.interface.editor_grid import EditorGrid
+
+if getattr(sys, 'frozen', False):
+    # If the application is run as a bundle, the PyInstaller bootloader
+    # extends the sys module by a flag frozen=True and sets the app
+    # path into variable _MEIPASS'.
+    application_path = sys._MEIPASS
+else:
+    application_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 class EpJsonEditorFrame(wx.Frame):
@@ -911,7 +920,7 @@ class EpJsonEditorFrame(wx.Frame):
         """
          Read the unit conversion file as a dictionary
         """
-        with open("./support/unit_conversions.json") as unit_conversion_file:
+        with open(os.path.join(application_path, "support", "unit_conversions.json")) as unit_conversion_file:
             self.unit_conversions = json.load(unit_conversion_file)
 
     def gather_active_references(self):
