@@ -812,6 +812,14 @@ class EpJsonEditorFrame(wx.Frame):
         self.display_explanation(self.selected_object_name, row_number=cell_row)
         self.set_cell_choices(cell_row, cell_column)
         self.populate_jump_list(value_string)
+        # the following code was an attempt to get the cell selection, pull down, and keystroke input to work like
+        # the classic IDF Editor.
+        # if self.main_grid.CanEnableCellControl():
+        #    self.main_grid.EnableCellEditControl()
+        # self.main_grid.GoToCell(cell_row, cell_column)
+        # cell_editor = self.main_grid.GetCellEditor(cell_row, cell_column)
+        # cell_editor.BeginEdit(cell_row, cell_column, self.main_grid)
+        # cell_editor.Show(True)
 
     def handle_cell_changed(self, event):
         # remove the characters after the pipe character | that are shown in the dropdown list.
@@ -897,6 +905,10 @@ class EpJsonEditorFrame(wx.Frame):
             choices.append(str(self.convert_unit_to_ip_using_row_index(row_field['maximum'], cell_row)) + " | maximum")
         self.main_grid.SetCellEditor(cell_row, cell_column,
                                      wx.grid.GridCellChoiceEditor(choices, allowOthers=True))
+        # the following code was an attempt to get the cell selection, pull down, and keystroke input to work like
+        # the classic IDF Editor.
+        #cell_editor = self.main_grid.GetCellEditor(cell_row, cell_column)
+        #cell_editor.BeginEdit(cell_row, cell_column, self.main_grid)
 
     def maximum_repeats_of_extensible_fields(self, selected_object_name, field_name):
         max_repeat = 0
