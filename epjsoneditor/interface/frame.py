@@ -86,6 +86,12 @@ class EpJsonEditorFrame(wx.Frame):
         self.Bind(wx.grid.EVT_GRID_SELECT_CELL, self.handle_cell_select_cell)
         self.Bind(wx.grid.EVT_GRID_CELL_CHANGED, self.handle_cell_changed)
 
+        # clicking on grid columns was crashing so adding these to catch them
+        self.Bind(wx.grid.EVT_GRID_LABEL_LEFT_CLICK, self.handle_grid_label_click)
+        self.Bind(wx.grid.EVT_GRID_LABEL_LEFT_DCLICK, self.handle_grid_label_click)
+        self.Bind(wx.grid.EVT_GRID_LABEL_RIGHT_CLICK, self.handle_grid_label_click)
+        self.Bind(wx.grid.EVT_GRID_LABEL_RIGHT_DCLICK, self.handle_grid_label_click)
+
         self._mgr.AddPane(self.main_grid, aui.AuiPaneInfo().Name("grid_content").
                           CenterPane().Hide().MinimizeButton(True))
 
@@ -777,6 +783,13 @@ class EpJsonEditorFrame(wx.Frame):
             converted_value = converted_value - self.unit_conversions[unit_string]["offset"]
         converted_value = converted_value / self.unit_conversions[unit_string]["multiplier"]
         return converted_value
+
+    def handle_grid_label_click(self, event):
+        cell_row = event.GetRow()
+        cell_column = event.GetCol()
+        if cell_column > 0:
+            self.main_grid.SelectCol(cell_column)
+
 
     def handle_cell_left_click(self, event):
         cell_row = event.GetRow()
