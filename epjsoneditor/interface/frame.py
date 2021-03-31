@@ -785,11 +785,9 @@ class EpJsonEditorFrame(wx.Frame):
         return converted_value
 
     def handle_grid_label_click(self, event):
-        cell_row = event.GetRow()
         cell_column = event.GetCol()
         if cell_column > 0:
             self.main_grid.SelectCol(cell_column)
-
 
     def handle_cell_left_click(self, event):
         cell_row = event.GetRow()
@@ -907,8 +905,8 @@ class EpJsonEditorFrame(wx.Frame):
                                      wx.grid.GridCellChoiceEditor(choices, allowOthers=True))
         # the following code was an attempt to get the cell selection, pull down, and keystroke input to work like
         # the classic IDF Editor.
-        #cell_editor = self.main_grid.GetCellEditor(cell_row, cell_column)
-        #cell_editor.BeginEdit(cell_row, cell_column, self.main_grid)
+        # cell_editor = self.main_grid.GetCellEditor(cell_row, cell_column)
+        # cell_editor.BeginEdit(cell_row, cell_column, self.main_grid)
 
     def maximum_repeats_of_extensible_fields(self, selected_object_name, field_name):
         max_repeat = 0
