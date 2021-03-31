@@ -50,4 +50,4 @@ ADD ./ /home/project/
 WORKDIR /home/project/epjsoneditor/
 
 RUN pyinstaller linux_onefile_main.spec
-#RUN pyinstaller linux_main.spec
+#RUN pyinstaller main.spec
