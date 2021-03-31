@@ -1015,13 +1015,15 @@ class EpJsonEditorFrame(wx.Frame):
             elif 'enum' in field_details:
                 new_object[field_name] = field_details['enum'][0]
             else:
-                if field_details['type'] == 'string':
-                    new_object[field_name] = ''
-                if field_details['is_required']:
-                    if 'minimum' in field_details:
-                        new_object[field_name] = field_details['minimum']
-                    elif 'maximum' in field_details:
-                        new_object[field_name] = field_details['maximum']
+                if 'type' in field_details:
+                    if field_details['type'] == 'string':
+                        new_object[field_name] = ''
+                if 'is_required' in field_details:
+                    if field_details['is_required']:
+                        if 'minimum' in field_details:
+                            new_object[field_name] = field_details['minimum']
+                        elif 'maximum' in field_details:
+                            new_object[field_name] = field_details['maximum']
         all_objects_in_class[f'new-{count_of_objects + 1}'] = new_object
         if count_of_objects == 0:
             self.current_file[self.selected_object_name] = all_objects_in_class
