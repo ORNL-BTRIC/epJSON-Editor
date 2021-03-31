@@ -86,6 +86,12 @@ class EpJsonEditorFrame(wx.Frame):
         self.Bind(wx.grid.EVT_GRID_SELECT_CELL, self.handle_cell_select_cell)
         self.Bind(wx.grid.EVT_GRID_CELL_CHANGED, self.handle_cell_changed)
 
+        # clicking on grid columns was crashing so adding these to catch them
+        self.Bind(wx.grid.EVT_GRID_LABEL_LEFT_CLICK, self.handle_grid_label_click)
+        self.Bind(wx.grid.EVT_GRID_LABEL_LEFT_DCLICK, self.handle_grid_label_click)
+        self.Bind(wx.grid.EVT_GRID_LABEL_RIGHT_CLICK, self.handle_grid_label_click)
+        self.Bind(wx.grid.EVT_GRID_LABEL_RIGHT_DCLICK, self.handle_grid_label_click)
+
         self._mgr.AddPane(self.main_grid, aui.AuiPaneInfo().Name("grid_content").
                           CenterPane().Hide().MinimizeButton(True))
 
@@ -778,6 +784,11 @@ class EpJsonEditorFrame(wx.Frame):
         converted_value = converted_value / self.unit_conversions[unit_string]["multiplier"]
         return converted_value
 
+    def handle_grid_label_click(self, event):
+        cell_column = event.GetCol()
+        if cell_column > 0:
+            self.main_grid.SelectCol(cell_column)
+
     def handle_cell_left_click(self, event):
         cell_row = event.GetRow()
         cell_column = event.GetCol()
@@ -799,6 +810,14 @@ class EpJsonEditorFrame(wx.Frame):
         self.display_explanation(self.selected_object_name, row_number=cell_row)
         self.set_cell_choices(cell_row, cell_column)
         self.populate_jump_list(value_string)
+        # the following code was an attempt to get the cell selection, pull down, and keystroke input to work like
+        # the classic IDF Editor.
+        # if self.main_grid.CanEnableCellControl():
+        #    self.main_grid.EnableCellEditControl()
+        # self.main_grid.GoToCell(cell_row, cell_column)
+        # cell_editor = self.main_grid.GetCellEditor(cell_row, cell_column)
+        # cell_editor.BeginEdit(cell_row, cell_column, self.main_grid)
+        # cell_editor.Show(True)
 
     def handle_cell_changed(self, event):
         # remove the characters after the pipe character | that are shown in the dropdown list.
@@ -884,6 +903,10 @@ class EpJsonEditorFrame(wx.Frame):
             choices.append(str(self.convert_unit_to_ip_using_row_index(row_field['maximum'], cell_row)) + " | maximum")
         self.main_grid.SetCellEditor(cell_row, cell_column,
                                      wx.grid.GridCellChoiceEditor(choices, allowOthers=True))
+        # the following code was an attempt to get the cell selection, pull down, and keystroke input to work like
+        # the classic IDF Editor.
+        # cell_editor = self.main_grid.GetCellEditor(cell_row, cell_column)
+        # cell_editor.BeginEdit(cell_row, cell_column, self.main_grid)
 
     def maximum_repeats_of_extensible_fields(self, selected_object_name, field_name):
         max_repeat = 0
@@ -1002,13 +1025,15 @@ class EpJsonEditorFrame(wx.Frame):
             elif 'enum' in field_details:
                 new_object[field_name] = field_details['enum'][0]
             else:
-                if field_details['type'] == 'string':
-                    new_object[field_name] = ''
-                if field_details['is_required']:
-                    if 'minimum' in field_details:
-                        new_object[field_name] = field_details['minimum']
-                    elif 'maximum' in field_details:
-                        new_object[field_name] = field_details['maximum']
+                if 'type' in field_details:
+                    if field_details['type'] == 'string':
+                        new_object[field_name] = ''
+                if 'is_required' in field_details:
+                    if field_details['is_required']:
+                        if 'minimum' in field_details:
+                            new_object[field_name] = field_details['minimum']
+                        elif 'maximum' in field_details:
+                            new_object[field_name] = field_details['maximum']
         all_objects_in_class[f'new-{count_of_objects + 1}'] = new_object
         if count_of_objects == 0:
             self.current_file[self.selected_object_name] = all_objects_in_class
