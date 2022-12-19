@@ -792,13 +792,15 @@ class EpJsonEditorFrame(wx.Frame):
     def handle_cell_left_click(self, event):
         cell_row = event.GetRow()
         cell_column = event.GetCol()
-        self.enter_cell(cell_row, cell_column)
+        if cell_column > 0:
+            self.enter_cell(cell_row, cell_column)
         event.Skip()
 
     def handle_cell_select_cell(self, event):
         cell_row = event.GetRow()
         cell_column = event.GetCol()
-        self.enter_cell(cell_row, cell_column)
+        if cell_column > 0:
+            self.enter_cell(cell_row, cell_column)
         event.Skip()
 
     def enter_cell(self, cell_row, cell_column):
