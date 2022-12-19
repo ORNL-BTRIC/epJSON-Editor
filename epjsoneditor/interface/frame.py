@@ -587,6 +587,7 @@ class EpJsonEditorFrame(wx.Frame):
             self.field_to_row_number[row_field["display_field_name"]] = row_counter
             self.field_name_to_display_name[row_field["field_name"]] = row_field["display_field_name"]
             self.main_grid.SetCellValue(row_counter, 0, self.display_unit(row_field))
+            self.main_grid.SetReadOnly(row_counter,0, True)
         # populate the grid with the field values from the current file
         max_row = self.main_grid.GetNumberRows()
         max_col = self.main_grid.GetNumberCols()
