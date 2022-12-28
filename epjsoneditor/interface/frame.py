@@ -587,7 +587,7 @@ class EpJsonEditorFrame(wx.Frame):
             self.field_to_row_number[row_field["display_field_name"]] = row_counter
             self.field_name_to_display_name[row_field["field_name"]] = row_field["display_field_name"]
             self.main_grid.SetCellValue(row_counter, 0, self.display_unit(row_field))
-            self.main_grid.SetReadOnly(row_counter,0, True)
+            self.main_grid.SetReadOnly(row_counter, 0, True)
         # populate the grid with the field values from the current file
         max_row = self.main_grid.GetNumberRows()
         max_col = self.main_grid.GetNumberCols()
@@ -634,7 +634,7 @@ class EpJsonEditorFrame(wx.Frame):
         if object_dict.extensible_size > 0:  # add extensible fields if present
             last_field_name = row_fields[-1]["field_name"]
 
-            repeat_extension_fields = self.maximum_repeats_of_extensible_fields(object_name, last_field_name) + self.\
+            repeat_extension_fields = self.maximum_repeats_of_extensible_fields(object_name, last_field_name) + self. \
                 additional_sets_of_fields
             row_fields.pop()  # for extensible object don't need last item
             for repeat_field_group in range(repeat_extension_fields):
