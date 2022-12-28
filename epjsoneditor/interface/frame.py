@@ -609,7 +609,7 @@ class EpJsonEditorFrame(wx.Frame):
                             self.main_grid.SetCellBackgroundColour(row_counter, column_counter, "tan")
         # self.main_grid.AutoSizeColumns()
         self.resize_auto_plus_all_columns()
-        self.main_grid.SetRowLabelSize(300)
+        self.main_grid.SetRowLabelSize(wx.grid.GRID_AUTOSIZE)
         self.main_grid.SetRowLabelAlignment(wx.ALIGN_LEFT, wx.ALIGN_TOP)
 
     def set_grid_settings(self):
