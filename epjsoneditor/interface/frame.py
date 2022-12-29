@@ -587,6 +587,7 @@ class EpJsonEditorFrame(wx.Frame):
             self.field_to_row_number[row_field["display_field_name"]] = row_counter
             self.field_name_to_display_name[row_field["field_name"]] = row_field["display_field_name"]
             self.main_grid.SetCellValue(row_counter, 0, self.display_unit(row_field))
+            self.main_grid.SetReadOnly(row_counter, 0, True)
         # populate the grid with the field values from the current file
         max_row = self.main_grid.GetNumberRows()
         max_col = self.main_grid.GetNumberCols()
@@ -608,7 +609,7 @@ class EpJsonEditorFrame(wx.Frame):
                             self.main_grid.SetCellBackgroundColour(row_counter, column_counter, "tan")
         # self.main_grid.AutoSizeColumns()
         self.resize_auto_plus_all_columns()
-        self.main_grid.SetRowLabelSize(300)
+        self.main_grid.SetRowLabelSize(wx.grid.GRID_AUTOSIZE)
         self.main_grid.SetRowLabelAlignment(wx.ALIGN_LEFT, wx.ALIGN_TOP)
 
     def set_grid_settings(self):
@@ -633,7 +634,7 @@ class EpJsonEditorFrame(wx.Frame):
         if object_dict.extensible_size > 0:  # add extensible fields if present
             last_field_name = row_fields[-1]["field_name"]
 
-            repeat_extension_fields = self.maximum_repeats_of_extensible_fields(object_name, last_field_name) + self.\
+            repeat_extension_fields = self.maximum_repeats_of_extensible_fields(object_name, last_field_name) + self. \
                 additional_sets_of_fields
             row_fields.pop()  # for extensible object don't need last item
             for repeat_field_group in range(repeat_extension_fields):
@@ -792,13 +793,15 @@ class EpJsonEditorFrame(wx.Frame):
     def handle_cell_left_click(self, event):
         cell_row = event.GetRow()
         cell_column = event.GetCol()
-        self.enter_cell(cell_row, cell_column)
+        if cell_column > 0:
+            self.enter_cell(cell_row, cell_column)
         event.Skip()
 
     def handle_cell_select_cell(self, event):
         cell_row = event.GetRow()
         cell_column = event.GetCol()
-        self.enter_cell(cell_row, cell_column)
+        if cell_column > 0:
+            self.enter_cell(cell_row, cell_column)
         event.Skip()
 
     def enter_cell(self, cell_row, cell_column):
